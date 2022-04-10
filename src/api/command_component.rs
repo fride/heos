@@ -1,6 +1,6 @@
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::connection::{CommandResponse, Connection};
+use super::connection::{CommandResponse, Connection};
 use crate::model::browse::MusicSource;
 use crate::model::group::GroupInfo;
 use crate::model::player::{PlayerInfo, PlayerNowPlayingMedia};

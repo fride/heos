@@ -6,29 +6,24 @@ extern crate serde_qs as qs;
 
 pub use error::{HeosError, HeosErrorCode};
 
-use crate::components::PlayerUpdate;
+use crate::api::PlayerUpdate;
 use crate::model::event::HeosEvent;
 
-pub mod connection;
 mod error;
 pub mod model;
-pub(crate) mod parsers;
 
 mod spielwiese;
 pub type HeosResult<T> = Result<T, HeosError>;
 
-pub mod components;
+pub mod api;
 
 #[tokio::main]
 async fn main() -> crate::HeosResult<()> {
-    println!("Hello, world!");
+    // let (api, mut results, mut errors) = api::connect("192.168.178.27:1255").await?;
+    let (api, mut results, mut errors) = api::find().await?;
 
-    let connection = connection::Connection::connect("192.168.178.27:1255").await?;
-
-    let (api, mut results, mut errors) = components::heos_components(connection).await?;
-
-    api.send(components::ApiCommand::GetPlayers).await.unwrap();
-    api.send(components::ApiCommand::GetGroups).await.unwrap();
+    api.send(api::ApiCommand::GetPlayers).await.unwrap();
+    api.send(api::ApiCommand::GetGroups).await.unwrap();
 
     loop {
         tokio::select! {
@@ -37,7 +32,7 @@ async fn main() -> crate::HeosResult<()> {
                 match response {
                     PlayerUpdate::Players(players) => {
                         for p in players {
-                            api.send(components::ApiCommand::GetNowPlaying(p.pid)).await;
+                            api.send(api::ApiCommand::GetNowPlaying(p.pid)).await;
                         }
                     }
                     PlayerUpdate::NowPlaying(_) => {}
@@ -57,7 +52,7 @@ mod foo {
     use tokio::sync::oneshot;
 
     use crate::model::group::GroupInfo;
-    use crate::model::player::{NowPlayingMedia, NowPlayingProgress, PlayState, PlayerInfo};
+    use crate::model::player::{NowPlayingMedia, NowPlayingProgress, PlayerInfo, PlayState};
     use crate::model::PlayerId;
 
     use super::*;

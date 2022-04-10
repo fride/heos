@@ -1,6 +1,6 @@
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::components::ApiCommand;
+use crate::api::ApiCommand;
 use crate::{HeosError, HeosEvent, PlayerUpdate};
 
 pub fn heos_event_aggregator_component(

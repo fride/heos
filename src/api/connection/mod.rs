@@ -38,6 +38,7 @@ impl Connection {
 
     pub async fn connect<T: ToSocketAddrs>(s: T) -> HeosResult<Connection> {
         let stream = TcpStream::connect(s).await?;
+        println!("connected woth :{:?}", &stream);
         Ok(Self::new(stream))
     }
 
@@ -118,14 +119,14 @@ impl Connection {
             // On success, the number of bytes is returned. `0` indicates "end
             // of stream".
             if 0 == self.stream.read_buf(&mut self.buffer).await? {
-                // The remote closed the connection. For this to be a clean
+                // The remote closed the components.connection. For this to be a clean
                 // shutdown, there should be no data in the read buffer. If
                 // there is, this means that the peer closed the socket while
                 // sending a frame.
                 if self.buffer.is_empty() {
                     return Ok(None);
                 } else {
-                    return Err("connection reset by peer".into());
+                    return Err("components.connection reset by peer".into());
                 }
             }
         }
@@ -159,7 +160,7 @@ impl Connection {
                 // value.
                 //
                 // If the encoded frame representation is invalid, an error is
-                // returned. This should terminate the **current** connection
+                // returned. This should terminate the **current** components.connection
                 // but should not impact any other connected client.
                 let frame = Frame::parse(&mut buf)?;
 
@@ -182,9 +183,9 @@ impl Connection {
             // We do not want to return `Err` from here as this "error" is an
             // expected runtime condition.
             Err(_Incomplete) => Ok(None),
-            // An error was encountered while parsing the frame. The connection
+            // An error was encountered while parsing the frame. The components.connection
             // is now in an invalid state. Returning `Err` from here will result
-            // in the connection being closed.
+            // in the components.connection being closed.
             // Err(e) => Err(e.into()),
         }
     }

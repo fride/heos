@@ -1,6 +1,6 @@
 use tokio::sync::mpsc::Sender;
 
-use crate::connection::Connection;
+use super::connection::Connection;
 use crate::{HeosError, HeosEvent, HeosResult};
 
 pub async fn heos_event_component(

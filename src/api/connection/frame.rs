@@ -56,7 +56,7 @@ impl Frame {
             // now prase the stuff!
             parsers::parse_response(json)
         } else {
-            Err("connection reset by peer".into())
+            Err("components.connection reset by peer".into())
         }
     }
 }

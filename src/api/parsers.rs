@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use qs;
 use regex::Regex;
 
-use crate::connection::{CommandResponse, EventResponse};
+use super::connection::{CommandResponse, EventResponse};
 
 use crate::model::browse::*;
 use crate::model::event::*;
