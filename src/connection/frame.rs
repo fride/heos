@@ -16,7 +16,7 @@ pub struct CommandResponse {
     pub command_name: String,
     pub message: String,
     pub payload: Json, // can be Null
-    pub options: Json // can be Null
+    pub options: Json, // can be Null
 }
 
 #[derive(Clone, Debug)]
@@ -143,7 +143,7 @@ mod parsers {
                 command_name: name.clone(),
                 message: message.clone(),
                 payload: response.payload,
-                options: response.options
+                options: response.options,
             })),
             _ => Err(format!("failed to parse response {:?}", &response).into()),
         }
@@ -155,8 +155,8 @@ mod parsers {
         use super::ResponseName;
 
         pub fn serialize<S>(name: &ResponseName, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: Serializer,
+        where
+            S: Serializer,
         {
             match name {
                 ResponseName::CommandName(s) => serializer.serialize_str(&s),
@@ -165,8 +165,8 @@ mod parsers {
         }
 
         pub fn deserialize<'de, D>(deserializer: D) -> Result<ResponseName, D::Error>
-            where
-                D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
         {
             let s = String::deserialize(deserializer)?;
             if s.starts_with("event") {
@@ -181,7 +181,6 @@ mod parsers {
 #[cfg(test)]
 mod tests {
     use serde_json::*;
-    use serde_qs::*;
 
     use crate::model;
 
@@ -193,7 +192,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let json_str = "
+        let _json_str = "
         {
             \
         }
@@ -206,7 +205,7 @@ mod tests {
             }
         });
 
-        let read = parsers::parse_response(json).unwrap();
+        let _read = parsers::parse_response(json).unwrap();
         assert_eq!(2 + 2, 4);
     }
 }

@@ -1,12 +1,12 @@
 use std::fmt;
 use std::fmt::Formatter;
 
+use crate::model::{Milliseconds, OnOrOff};
 use crate::HeosError;
-use crate::model::{Milliseconds, OnOrOff, PlayMode};
 
+use super::common::Time;
 use super::{AlbumId, GroupId, Level, PlayerId, QueueId};
 use super::{MediaId, SourceId};
-use super::common::Time;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum PlayState {
@@ -90,7 +90,7 @@ pub struct PlayerInfo {
     pub network: Option<String>,
     pub version: Option<String>,
     pub gid: Option<GroupId>,
-    pub control: Option<String>
+    pub control: Option<String>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq, Eq)]

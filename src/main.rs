@@ -6,15 +6,13 @@ extern crate serde_qs as qs;
 
 pub use error::{HeosError, HeosErrorCode};
 
-use crate::command::{GetGroups, GetPlayers, GetPlayerVolume};
 use crate::components::PlayerUpdate;
 use crate::model::event::HeosEvent;
 
+pub mod connection;
 mod error;
 pub mod model;
-pub mod connection;
 pub(crate) mod parsers;
-mod command;
 
 mod spielwiese;
 pub type HeosResult<T> = Result<T, HeosError>;
@@ -25,7 +23,7 @@ pub mod components;
 async fn main() -> crate::HeosResult<()> {
     println!("Hello, world!");
 
-    let mut connection = connection::Connection::connect("192.168.178.27:1255").await?;
+    let connection = connection::Connection::connect("192.168.178.27:1255").await?;
 
     let (api, mut results, mut errors) = components::heos_components(connection).await?;
 
@@ -49,44 +47,18 @@ async fn main() -> crate::HeosResult<()> {
             Some(error) = errors.recv() => {
                 println!("Got Error: {}", error);
             }
-        }
-        ;
+        };
     }
-
-    //
-    // let mut ex = command::CommandExecuter::new(connection);
-    // let players = ex.execute(GetPlayers).await?;
-    // println!("{:?}", players);
-    //
-    // let groups = ex.execute(GetGroups).await?;
-    // println!("{:?}", groups);
-    //
-    // let volume = ex.execute(GetPlayerVolume{pid: -1899423658}).await?;
-    // println!("{:?}", volume);
-    // //
-    // // let mut command_connection = connection.try_clone().await?;
-    // // let mut api = api::Api::new(command_connection);
-    // // let players = api.get_players().await?;
-    // //
-    // // println!("{:?}", players);
-    // //
-    // // let mut event_stream = api.into_stream();
-    // // tokio::pin!(event_stream);
-    // //
-    // // while let Some(msg) = event_stream.next().await {
-    // //     println!("got = {:?}", msg);
-    // // }
-    Ok(())
 }
 
 mod foo {
-    use bytes::Buf;
+
     use tokio::sync::mpsc;
     use tokio::sync::oneshot;
 
-    use crate::model::{Milliseconds, PlayerId};
     use crate::model::group::GroupInfo;
-    use crate::model::player::{NowPlayingMedia, NowPlayingProgress, PlayerInfo, PlayState};
+    use crate::model::player::{NowPlayingMedia, NowPlayingProgress, PlayState, PlayerInfo};
+    use crate::model::PlayerId;
 
     use super::*;
 
@@ -105,7 +77,11 @@ mod foo {
         SetNowPlayingProgress(NowPlayingProgress),
     }
 
-    async fn event_handler(event: HeosEvent, model_updates: mpsc::Sender<ModelUpdate>, command_channel: mpsc::Sender<HeosCommand>) {
+    async fn event_handler(
+        event: HeosEvent,
+        model_updates: mpsc::Sender<ModelUpdate>,
+        command_channel: mpsc::Sender<HeosCommand>,
+    ) {
         match event {
             HeosEvent::SourcesChanged => {
                 command_channel.send(HeosCommand::LoadSources).await;
@@ -117,13 +93,27 @@ mod foo {
                 command_channel.send(HeosCommand::LoadGroups).await;
             }
             HeosEvent::PlayerStateChanged { player_id, state } => {
-                model_updates.send(ModelUpdate::SetPlayState(player_id, state)).await;
+                model_updates
+                    .send(ModelUpdate::SetPlayState(player_id, state))
+                    .await;
             }
             HeosEvent::PlayerNowPlayingChanged { player_id } => {
-                command_channel.send(HeosCommand::LoadNowPlayingMedia(player_id)).await;
+                command_channel
+                    .send(HeosCommand::LoadNowPlayingMedia(player_id))
+                    .await;
             }
-            HeosEvent::PlayerNowPlayingProgress { player_id, cur_pos, duration } => {
-                model_updates.send(ModelUpdate::SetNowPlayingProgress(NowPlayingProgress { player_id, current_position: cur_pos, duration_in_ms: duration.unwrap() })).await;
+            HeosEvent::PlayerNowPlayingProgress {
+                player_id,
+                cur_pos,
+                duration,
+            } => {
+                model_updates
+                    .send(ModelUpdate::SetNowPlayingProgress(NowPlayingProgress {
+                        player_id,
+                        current_position: cur_pos,
+                        duration_in_ms: duration.unwrap(),
+                    }))
+                    .await;
             }
             HeosEvent::PlayerPlaybackError { .. } => {}
             HeosEvent::PlayerVolumeChanged { .. } => {}
@@ -140,8 +130,7 @@ mod foo {
         OneShot(oneshot::Sender<T>),
     }
 
-
     enum FooBarCommand {
-        GetPlayers(mpsc::Sender<HeosResult<Vec<PlayerInfo>>>)
+        GetPlayers(mpsc::Sender<HeosResult<Vec<PlayerInfo>>>),
     }
 }

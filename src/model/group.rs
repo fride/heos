@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::model::OnOrOff;
 
 use super::{GroupId, Level, PlayerId};
@@ -19,9 +17,8 @@ pub struct GroupMember {
     pub role: GroupRole,
 }
 
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct GroupInfo  {
+pub struct GroupInfo {
     pub name: String,
     pub gid: GroupId,
     pub players: Vec<GroupMember>,

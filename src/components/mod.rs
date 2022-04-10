@@ -1,23 +1,26 @@
 use tokio::sync::mpsc;
 
-pub use command_component::{ApiCommand, heos_api_component};
+pub use command_component::{heos_api_component, ApiCommand};
 pub use event_componment::heos_event_component;
 
-use crate::{HeosError, HeosEvent, HeosResult};
 use crate::connection::Connection;
-use crate::model::{Level, Milliseconds, OnOrOff, PlayerId};
 use crate::model::browse::MusicSource;
 use crate::model::group::GroupInfo;
 use crate::model::player::{PlayerInfo, PlayerNowPlayingMedia};
+use crate::model::{Level, Milliseconds, OnOrOff, PlayerId};
+use crate::{HeosError, HeosResult};
 
-mod event_componment;
 mod command_component;
 mod event_aggregator_component;
-
+mod event_componment;
 
 mod state_component;
 
-pub type HeosComponent = (mpsc::Sender<ApiCommand>, mpsc::Receiver<PlayerUpdate>, mpsc::Receiver<HeosError>);
+pub type HeosComponent = (
+    mpsc::Sender<ApiCommand>,
+    mpsc::Receiver<PlayerUpdate>,
+    mpsc::Receiver<HeosError>,
+);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlayerUpdate {
@@ -25,13 +28,13 @@ pub enum PlayerUpdate {
     Groups(Vec<GroupInfo>),
     NowPlaying(PlayerNowPlayingMedia),
     PlayerVolume(PlayerId, Level),
-    PlayingProgress(PlayerId,Milliseconds,Option<Milliseconds>),
+    PlayingProgress(PlayerId, Milliseconds, Option<Milliseconds>),
     PlayerPlaybackError(PlayerId, String),
-    PlayerVolumeChanged(PlayerId, Level,OnOrOff),
-    MusicSources(Vec<MusicSource>)
+    PlayerVolumeChanged(PlayerId, Level, OnOrOff),
+    MusicSources(Vec<MusicSource>),
 }
 
-pub async fn heos_components(mut connection: Connection) -> HeosResult<HeosComponent>{
+pub async fn heos_components(mut connection: Connection) -> HeosResult<HeosComponent> {
     let commend_connection = connection.try_clone().await?;
     // api calls
     let (command_send, command_receive) = mpsc::channel(32);
@@ -40,9 +43,21 @@ pub async fn heos_components(mut connection: Connection) -> HeosResult<HeosCompo
     let (event_send, event_receive) = mpsc::channel(32);
     let (error_send, error_receive) = mpsc::channel(32);
 
-    let _ = event_componment::heos_event_component(connection, event_send, error_send.clone()).await?;
-    command_component::heos_api_component(commend_connection, command_receive, response_send.clone(), error_send.clone()).await?;
-    event_aggregator_component::heos_event_aggregator_component(event_receive, command_send.clone(), response_send, error_send);
+    let _ =
+        event_componment::heos_event_component(connection, event_send, error_send.clone()).await?;
+    command_component::heos_api_component(
+        commend_connection,
+        command_receive,
+        response_send.clone(),
+        error_send.clone(),
+    )
+    .await?;
+    event_aggregator_component::heos_event_aggregator_component(
+        event_receive,
+        command_send.clone(),
+        response_send,
+        error_send,
+    );
 
     Ok((command_send, response_receive, error_receive))
 }

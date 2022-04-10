@@ -1,8 +1,8 @@
 use std::net::IpAddr;
 
-use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use ssdp::header::{HeaderMut, Man, MX, ST};
 use ssdp::message::{Config, Multicast, SearchRequest, SearchResponse};
+use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use tracing::info;
 
 use crate::HeosError;

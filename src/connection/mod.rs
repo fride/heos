@@ -2,12 +2,12 @@ use std::io::Cursor;
 
 use bytes::{Buf, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
-use tokio::net::{TcpSocket, TcpStream, ToSocketAddrs};
+use tokio::net::{TcpStream, ToSocketAddrs};
 use tracing::{debug, warn};
 
 pub use frame::*;
 
-use crate::{HeosError, HeosEvent, HeosResult};
+use crate::{HeosError, HeosResult};
 
 mod discover;
 mod frame;
@@ -36,7 +36,7 @@ impl Connection {
         })
     }
 
-    pub async fn connect<T : ToSocketAddrs>(s: T) -> HeosResult<Connection> {
+    pub async fn connect<T: ToSocketAddrs>(s: T) -> HeosResult<Connection> {
         let stream = TcpStream::connect(s).await?;
         Ok(Self::new(stream))
     }
@@ -68,7 +68,7 @@ impl Connection {
             let response = self.read_frame().await?;
             match response {
                 Some(Frame::Event(event)) => return Ok(event),
-                _ => {// nop
+                _ => { // nop
                 }
             }
         }
@@ -78,11 +78,16 @@ impl Connection {
             let response = self.read_frame().await?;
             match response {
                 Some(Frame::Response(command)) => return Ok(command),
-                Some(Frame::Error(error)) => return Err(HeosError::InvalidCommand{command : "".to_owned(), message : error}),
+                Some(Frame::Error(error)) => {
+                    return Err(HeosError::InvalidCommand {
+                        command: "".to_owned(),
+                        message: error,
+                    })
+                }
                 Some(Frame::UnderProcess(command)) => {
                     debug!(">> waiting for {} to finish.", &command);
-                },
-                _ => {// nop
+                }
+                _ => { // nop
                 }
             }
         }

@@ -59,7 +59,7 @@ pub enum HeosError {
     Error { message: String },
 
     #[error(transparent)]
-    Other(#[from] anyhow::Error)
+    Other(#[from] anyhow::Error),
 }
 
 impl From<&str> for HeosError {

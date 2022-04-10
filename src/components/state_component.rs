@@ -1,14 +1,12 @@
 use std::collections::BTreeMap;
 
-use tokio::sync::mpsc::{self, Receiver, Sender};
-use tokio::sync::oneshot;
+use tokio::sync::mpsc::Receiver;
+
 use tokio::sync::watch;
-use tracing::debug;
-use tracing_subscriber::fmt::format;
 
 use crate::model::group::GroupInfo;
-use crate::model::Level;
 use crate::model::player::PlayerInfo;
+use crate::model::Level;
 use crate::PlayerUpdate;
 
 #[derive(Default, Debug, Clone, Deserialize, Serialize)]
@@ -18,8 +16,8 @@ pub struct State {
     pub groups: BTreeMap<i64, GroupInfo>,
 }
 
-pub fn state_component(mut updates: Receiver<PlayerUpdate>) -> watch::Receiver<State>{
-    let (tx, mut rx) = watch::channel(State::default());
+pub fn state_component(mut updates: Receiver<PlayerUpdate>) -> watch::Receiver<State> {
+    let (tx, rx) = watch::channel(State::default());
     //
     // question here. Use a lock and stuff like thisy.
     tokio::spawn(async move {
@@ -29,9 +27,10 @@ pub fn state_component(mut updates: Receiver<PlayerUpdate>) -> watch::Receiver<S
             match event {
                 PlayerUpdate::Players(players) => {
                     state.players.clear();
-                    state.players = players.iter().map(|p| (p.pid, p.clone())).collect(); // into_iter would be better!?
+                    state.players = players.iter().map(|p| (p.pid, p.clone())).collect();
+                    // into_iter would be better!?
                 }
-                PlayerUpdate::Groups(mut groups) => {
+                PlayerUpdate::Groups(groups) => {
                     state.groups = groups.into_iter().map(|g| (g.gid, g)).collect();
                 }
                 PlayerUpdate::NowPlaying(_) => {}
