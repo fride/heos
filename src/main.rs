@@ -6,22 +6,17 @@ extern crate serde_qs as qs;
 
 pub use error::{HeosError, HeosErrorCode};
 
-use crate::api::Api;
 use crate::command::{GetGroups, GetPlayers, GetPlayerVolume};
 use crate::components::PlayerUpdate;
 use crate::model::event::HeosEvent;
 
 mod error;
 pub mod model;
-pub mod api;
 pub mod connection;
 pub(crate) mod parsers;
 mod command;
 
 mod spielwiese;
-// Just playing with it
-mod command_channel;
-
 pub type HeosResult<T> = Result<T, HeosError>;
 
 pub mod components;

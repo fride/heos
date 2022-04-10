@@ -4,7 +4,6 @@ pub use command_component::{ApiCommand, heos_api_component};
 pub use event_componment::heos_event_component;
 
 use crate::{HeosError, HeosEvent, HeosResult};
-use crate::command_channel::HeosResponse;
 use crate::connection::Connection;
 use crate::model::{Level, Milliseconds, OnOrOff, PlayerId};
 use crate::model::browse::MusicSource;

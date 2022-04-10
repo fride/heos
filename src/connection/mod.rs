@@ -8,7 +8,6 @@ use tracing::{debug, warn};
 pub use frame::*;
 
 use crate::{HeosError, HeosEvent, HeosResult};
-use crate::command_channel::HeosResponse;
 
 mod discover;
 mod frame;
