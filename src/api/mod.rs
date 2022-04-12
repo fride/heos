@@ -1,23 +1,26 @@
-mod parsers;
-mod state;
 use std::mem::transmute;
+
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::sync::oneshot::{channel, Receiver};
 
+use parsers::*;
+
 use crate::{HeosError, HeosResult};
+use crate::connection::*;
 use crate::model::event::HeosEvent;
 use crate::model::group::GroupInfo;
 use crate::model::player::{NowPlayingMedia, PlayerInfo, PlayerPlayState, PlayerVolume, PlayState};
 use crate::model::PlayerId;
 
-use crate::connection::*;
+mod parsers;
+mod state;
 
 pub type Responder<T> = oneshot::Sender<HeosResult<T>>;
 pub type Listener<T> = oneshot::Receiver<HeosResult<T>>;
 
-const GET_PLAYERS : &'static str = "player/get_players";
-const GET_GROUPS : &'static str = "group/get_groups";
+const GET_PLAYERS: &'static str = "player/get_players";
+const GET_GROUPS: &'static str = "group/get_groups";
 
 #[derive(Debug)]
 pub enum ApiCommand {
@@ -37,8 +40,8 @@ impl ApiCommand {
 pub type HeosApiChannel = mpsc::Sender<ApiCommand>;
 
 #[derive(Clone)]
-pub struct HeosApi{
-    channel: HeosApiChannel
+pub struct HeosApi {
+    channel: HeosApiChannel,
 }
 
 impl HeosApi {
@@ -50,15 +53,13 @@ impl HeosApi {
                 let _ = executor.execute(cmd).await;
             }
         });
-        Ok(Self{
-            channel: s
-        })
+        Ok(Self { channel: s })
     }
     pub async fn execute_command(&self, command: ApiCommand) {
         self.channel.send(command).await;
     }
 
-    pub async fn init(&self) -> HeosResult<()>{
+    pub async fn init(&self) -> HeosResult<()> {
         let players = self.get_players().await?;
         let groups = self.get_groups().await?;
         for player in &players {
@@ -66,24 +67,34 @@ impl HeosApi {
         }
         Ok(())
     }
-    pub async fn get_players(&self) -> HeosResult<Vec<PlayerInfo>>{
-        let (s,mut r) = oneshot::channel();
-        let _ = self.channel.send(ApiCommand::GetPlayers(s)).await.expect("NUMM!");
+    pub async fn get_players(&self) -> HeosResult<Vec<PlayerInfo>> {
+        let (s, mut r) = oneshot::channel();
+        let _ = self
+            .channel
+            .send(ApiCommand::GetPlayers(s))
+            .await
+            .expect("NUMM!");
         r.await.expect("BUMM!")
     }
-    pub async fn get_play_state(&self, pid : PlayerId) -> HeosResult<PlayerPlayState>{
-        let (s,mut r) = oneshot::channel();
-        let _ = self.channel.send(ApiCommand::GetPlayState(pid, s)).await.expect("NUMM!");
+    pub async fn get_play_state(&self, pid: PlayerId) -> HeosResult<PlayerPlayState> {
+        let (s, mut r) = oneshot::channel();
+        let _ = self
+            .channel
+            .send(ApiCommand::GetPlayState(pid, s))
+            .await
+            .expect("NUMM!");
         r.await.expect("BUMM!")
     }
-    pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>>{
-        let (s,mut r) = oneshot::channel();
-        let _ = self.channel.send(ApiCommand::GetGroups(s)).await.expect("NUMM!");
+    pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>> {
+        let (s, mut r) = oneshot::channel();
+        let _ = self
+            .channel
+            .send(ApiCommand::GetGroups(s))
+            .await
+            .expect("NUMM!");
         r.await.expect("BUMM!")
     }
 }
-
-use parsers::*;
 
 struct CommandExecutor(Connection);
 impl CommandExecutor {
@@ -92,17 +103,18 @@ impl CommandExecutor {
             ApiCommand::GetPlayers(responder) => {
                 let response = self.execute_command(GET_PLAYERS).await;
                 let _ = responder.send(response);
-            },
+            }
             ApiCommand::GetPlayerVolume(pid, responder) => {
-                let response = self.execute_command(
-                    &format!("player/get_volume?pid={pid}", pid=pid)).await;
+                let response = self
+                    .execute_command(&format!("player/get_volume?pid={pid}", pid = pid))
+                    .await;
                 let _ = responder.send(response);
             }
             ApiCommand::GetPlayState(pid, responder) => {
-                let command = format!("player/get_play_state?pid={pid}", pid=&pid);
-                let response : HeosResult<PlayerPlayState> = self.execute_command(&command).await;
-                let _ = responder.send( response);
-            },
+                let command = format!("player/get_play_state?pid={pid}", pid = &pid);
+                let response: HeosResult<PlayerPlayState> = self.execute_command(&command).await;
+                let _ = responder.send(response);
+            }
             ApiCommand::GetGroups(responder) => {
                 let response = self.execute_command(GET_GROUPS).await;
                 let _ = responder.send(response);
@@ -110,9 +122,9 @@ impl CommandExecutor {
             _ => {}
         }
     }
-    async fn execute_command<T>(&mut self,command: &str) -> HeosResult<T>
-        where
-            T: TryFrom<CommandResponse, Error = HeosError>,
+    async fn execute_command<T>(&mut self, command: &str) -> HeosResult<T>
+    where
+        T: TryFrom<CommandResponse, Error = HeosError>,
     {
         println!("Sending: {}", command);
         let _ = self.0.write_frame(&command).await?;

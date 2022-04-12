@@ -4,13 +4,12 @@ use qs;
 use regex::Regex;
 
 use crate::connection::{CommandResponse, EventResponse};
-
+use crate::model::*;
 use crate::model::browse::*;
 use crate::model::event::*;
 use crate::model::group::GroupInfo;
 use crate::model::player::*;
 use crate::model::system::*;
-use crate::model::*;
 
 impl TryFrom<CommandResponse> for Vec<PlayerInfo> {
     type Error = crate::HeosError;
@@ -142,7 +141,6 @@ fn qs_to_json(event_name: &str, message: &str) -> crate::HeosResult<serde_json::
 
 #[cfg(test)]
 mod tests {
-
     use serde_json::*;
 
     use super::*;

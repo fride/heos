@@ -1,5 +1,6 @@
+use serde::{Deserialize, Serialize};
+
 use super::SourceId;
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct MusicSource {

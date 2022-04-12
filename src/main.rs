@@ -3,12 +3,14 @@ extern crate serde_derive;
 
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use rusty_heos::api::{ApiCommand, HeosApi};
-use rusty_heos::HeosResult;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+
+use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use pretty_env_logger::env_logger;
+
+use rusty_heos::api::{ApiCommand, HeosApi};
+use rusty_heos::HeosResult;
 
 mod ui;
 
@@ -17,7 +19,7 @@ async fn index(data: Data<Mutex<HeosApi>>) -> String {
     let data = data.lock().unwrap();
     let players = data.get_players().await.unwrap();
     let groups = data.get_groups().await.unwrap();
-    let json : ui::Players = (players, groups).into();
+    let json: ui::Players = (players, groups).into();
     serde_json::to_string_pretty(&json).unwrap()
 }
 
@@ -58,9 +60,9 @@ async fn main() -> crate::HeosResult<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .route("/hey", web::get().to(manual_hello))
     })
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await;
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await;
 
     Ok(())
 }

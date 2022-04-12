@@ -1,5 +1,4 @@
 use super::*;
-
 use super::player::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
