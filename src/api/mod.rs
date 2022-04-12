@@ -1,77 +1,100 @@
-use tokio::net::ToSocketAddrs;
+mod parsers;
+
+use std::mem::transmute;
 use tokio::sync::mpsc;
+use tokio::sync::oneshot;
+use tokio::sync::oneshot::{channel, Receiver};
 
-pub use command_component::{ApiCommand, heos_api_component};
-pub use event_componment::heos_event_component;
-
-use self::connection::Connection;
-use crate::model::browse::MusicSource;
-use crate::model::group::GroupInfo;
-use crate::model::player::{PlayerInfo, PlayerNowPlayingMedia};
-use crate::model::{Level, Milliseconds, OnOrOff, PlayerId};
 use crate::{HeosError, HeosResult};
+use crate::model::event::HeosEvent;
+use crate::model::group::GroupInfo;
+use crate::model::player::{NowPlayingMedia, PlayerInfo, PlayerPlayState, PlayerVolume, PlayState};
+use crate::model::PlayerId;
 
-mod command_component;
-mod event_aggregator_component;
-mod event_componment;
+use crate::connection::*;
 
-mod state_component;
-pub(crate) mod parsers;
-mod connection;
+pub type Responder<T> = oneshot::Sender<HeosResult<T>>;
+pub type Listener<T> = oneshot::Receiver<HeosResult<T>>;
 
-pub type HeosComponent = (
-    mpsc::Sender<ApiCommand>,
-    mpsc::Receiver<PlayerUpdate>,
-    mpsc::Receiver<HeosError>,
-);
+const GET_PLAYERS : &'static str = "player/get_players";
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum PlayerUpdate {
-    Players(Vec<PlayerInfo>),
-    Groups(Vec<GroupInfo>),
-    NowPlaying(PlayerNowPlayingMedia),
-    PlayerVolume(PlayerId, Level),
-    PlayingProgress(PlayerId, Milliseconds, Option<Milliseconds>),
-    PlayerPlaybackError(PlayerId, String),
-    PlayerVolumeChanged(PlayerId, Level, OnOrOff),
-    MusicSources(Vec<MusicSource>),
+#[derive(Debug)]
+pub enum ApiCommand {
+    GetPlayers(Responder<Vec<PlayerInfo>>),
+    GetPlayState(PlayerId, Responder<PlayerPlayState>),
+    GetPlayerVolume(PlayerId, Responder<PlayerVolume>),
+    GetNowPlayingMedia(PlayerId, Responder<NowPlayingMedia>),
+    GetGroups(Responder<Vec<GroupInfo>>),
+    RegisterForChangeEvents(Responder<mpsc::Receiver<HeosEvent>>),
+}
+impl ApiCommand {
+    pub fn get_player_volume(pid: PlayerId) -> (Listener<PlayerVolume>, ApiCommand) {
+        let (s, mut r) = channel();
+        (r, Self::GetPlayerVolume(pid, s))
+    }
+}
+pub type HeosApiChannel = mpsc::Sender<ApiCommand>;
+
+#[derive(Clone)]
+pub struct HeosApi(HeosApiChannel);
+
+impl HeosApi {
+    pub async fn connect(mut connection: crate::connection::Connection) -> HeosResult<Self> {
+        let (s, mut r) = mpsc::channel(12);
+        tokio::spawn(async move {
+            let mut executor = CommandExecutor(connection);
+            while let Some(cmd) = r.recv().await {
+                let _ = executor.execute(cmd).await;
+            }
+        });
+        Ok(Self(s))
+    }
+    pub async fn execute_command(&self, command: ApiCommand) {
+        self.0.send(command).await;
+    }
+
+    pub async fn get_players(&self) -> HeosResult<Vec<PlayerInfo>>{
+        let (s,mut r) = oneshot::channel();
+        let _ = self.0.send(ApiCommand::GetPlayers(s)).await.expect("NUMM!");
+        r.await.expect("BUMM!")
+    }
+    pub async fn get_play_state(&self, pid : PlayerId) -> HeosResult<PlayerPlayState>{
+        let (s,mut r) = oneshot::channel();
+        let _ = self.0.send(ApiCommand::GetPlayState(pid, s)).await.expect("NUMM!");
+        r.await.expect("BUMM!")
+    }
 }
 
-pub async fn find() -> HeosResult<HeosComponent> {
-    let mut connection = connection::Connection::find().await?;
-    do_connect(connection).await
-}
+use parsers::*;
 
-pub async fn connect<T: ToSocketAddrs>(c: T) -> HeosResult<HeosComponent> {
-    let mut connection = connection::Connection::connect(c).await?;
-    do_connect(connection).await
-
-}
-async fn do_connect(mut connection : connection::Connection) -> HeosResult<HeosComponent>  {
-    let commend_connection = connection.try_clone().await?;
-    println!("connected");
-    // api calls
-    let (command_send, command_receive) = mpsc::channel(32);
-    // api results and event results
-    let (response_send, response_receive) = mpsc::channel(32);
-    let (event_send, event_receive) = mpsc::channel(32);
-    let (error_send, error_receive) = mpsc::channel(32);
-
-    let _ =
-        event_componment::heos_event_component(connection, event_send, error_send.clone()).await?;
-    command_component::heos_api_component(
-        commend_connection,
-        command_receive,
-        response_send.clone(),
-        error_send.clone(),
-    )
-        .await?;
-    event_aggregator_component::heos_event_aggregator_component(
-        event_receive,
-        command_send.clone(),
-        response_send,
-        error_send,
-    );
-
-    Ok((command_send, response_receive, error_receive))
+struct CommandExecutor(Connection);
+impl CommandExecutor {
+    pub async fn execute(&mut self, command: ApiCommand) {
+        match command {
+            ApiCommand::GetPlayers(responder) => {
+                let response = self.execute_command(GET_PLAYERS).await;
+                let _ = responder.send(response);
+            },
+            ApiCommand::GetPlayerVolume(pid, responder) => {
+                let response = self.execute_command(
+                    &format!("player/get_volume?pid={pid}", pid=pid)).await;
+                let _ = responder.send(response);
+            }
+            ApiCommand::GetPlayState(pid, responder) => {
+                let command = format!("player/get_play_state?pid={pid}", pid=&pid);
+                let response : HeosResult<PlayerPlayState> = self.execute_command(&command).await;
+                let _ = responder.send( response);
+            }
+            _ => {}
+        }
+    }
+    async fn execute_command<T>(&mut self,command: &str) -> HeosResult<T>
+        where
+            T: TryFrom<CommandResponse, Error = HeosError>,
+    {
+        println!("Sending: {}", command);
+        let _ = self.0.write_frame(&command).await?;
+        let response = self.0.read_command_response().await?;
+        response.try_into()
+    }
 }

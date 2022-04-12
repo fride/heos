@@ -8,7 +8,7 @@ let
 
   fetch_file = pkgs: name: spec:
     let
-      name' = sanitizeName name + "-src";
+      name' = sanitizeName name + "-src2";
     in
       if spec.builtin or true then
         builtins_fetchurl { inherit (spec) url sha256; name = name'; }
@@ -17,7 +17,7 @@ let
 
   fetch_tarball = pkgs: name: spec:
     let
-      name' = sanitizeName name + "-src";
+      name' = sanitizeName name + "-src2";
     in
       if spec.builtin or true then
         builtins_fetchTarball { name = name'; inherit (spec) url sha256; }

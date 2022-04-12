@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use qs;
 use regex::Regex;
 
-use super::connection::{CommandResponse, EventResponse};
+use crate::connection::{CommandResponse, EventResponse};
 
 use crate::model::browse::*;
 use crate::model::event::*;
@@ -87,6 +87,14 @@ impl TryFrom<CommandResponse> for PlayerNowPlayingMedia {
             player_id: params.pid.unwrap(),
             media: media,
         })
+    }
+}
+impl TryFrom<CommandResponse> for PlayerPlayState {
+    type Error = crate::HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let params: PlayerPlayState = qs::from_str(value.message.as_str())?;
+        Ok(params)
     }
 }
 

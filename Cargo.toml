@@ -20,10 +20,17 @@ tracing-subscriber = { version = "0.2.7", default-features = false, features = [
 pretty_env_logger = "0.4.0"
 log = "0.4.6"
 
-
 # Error handling
 thiserror = "1.0.21"
 anyhow = "1.0.52"
+
+[dependencies.druid]
+version = "0.7.0"
+features = ["im", "svg", "image"]
+
+[dependencies.im]
+version = "*"
+features = ["proptest", "serde"]
 
 [dependencies.tokio]
 version = "1.15.0"

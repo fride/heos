@@ -1,3 +1,0 @@
-enum HeosCommand {
-    GetPlayers(),
-}

@@ -49,7 +49,6 @@ impl std::str::FromStr for PlayState {
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct PlayerPlayState {
-    #[serde(alias="pid")]
     pub player_id: PlayerId,
     pub state: PlayState,
 }
@@ -144,9 +143,8 @@ impl From<(PlayerId, Level)> for PlayerVolume {
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq,Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub struct PlayerStepLevel {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub step: u8,
 }
@@ -164,21 +162,18 @@ pub struct QueueEntry {
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct PlayerPlayMode {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub mode: super::PlayMode,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct PlayerMute {
-    #[serde(rename = "pid")]
     pub player_id: i64,
     pub state: OnOrOff,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct NowPlayingProgress {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub current_position: Milliseconds,
     pub duration_in_ms: Milliseconds,
