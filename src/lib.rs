@@ -15,7 +15,9 @@ use crate::api::{HeosApi, ApiCommand};
 pub type HeosResult<T> = Result<T, HeosError>;
 
 pub async fn create_api() -> HeosResult<HeosApi>{
+    println!("Connecting");
     let mut connection = connection::Connection::find().await?;
     let api = api::HeosApi::connect(connection).await?;
+    println!("Conneced");
     Ok(api)
 }

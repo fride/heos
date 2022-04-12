@@ -1,5 +1,5 @@
 mod parsers;
-
+mod state;
 use std::mem::transmute;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -17,6 +17,7 @@ pub type Responder<T> = oneshot::Sender<HeosResult<T>>;
 pub type Listener<T> = oneshot::Receiver<HeosResult<T>>;
 
 const GET_PLAYERS : &'static str = "player/get_players";
+const GET_GROUPS : &'static str = "group/get_groups";
 
 #[derive(Debug)]
 pub enum ApiCommand {
@@ -36,7 +37,9 @@ impl ApiCommand {
 pub type HeosApiChannel = mpsc::Sender<ApiCommand>;
 
 #[derive(Clone)]
-pub struct HeosApi(HeosApiChannel);
+pub struct HeosApi{
+    channel: HeosApiChannel
+}
 
 impl HeosApi {
     pub async fn connect(mut connection: crate::connection::Connection) -> HeosResult<Self> {
@@ -47,20 +50,35 @@ impl HeosApi {
                 let _ = executor.execute(cmd).await;
             }
         });
-        Ok(Self(s))
+        Ok(Self{
+            channel: s
+        })
     }
     pub async fn execute_command(&self, command: ApiCommand) {
-        self.0.send(command).await;
+        self.channel.send(command).await;
     }
 
+    pub async fn init(&self) -> HeosResult<()>{
+        let players = self.get_players().await?;
+        let groups = self.get_groups().await?;
+        for player in &players {
+            let play_state = self.get_play_state(player.pid.clone()).await?;
+        }
+        Ok(())
+    }
     pub async fn get_players(&self) -> HeosResult<Vec<PlayerInfo>>{
         let (s,mut r) = oneshot::channel();
-        let _ = self.0.send(ApiCommand::GetPlayers(s)).await.expect("NUMM!");
+        let _ = self.channel.send(ApiCommand::GetPlayers(s)).await.expect("NUMM!");
         r.await.expect("BUMM!")
     }
     pub async fn get_play_state(&self, pid : PlayerId) -> HeosResult<PlayerPlayState>{
         let (s,mut r) = oneshot::channel();
-        let _ = self.0.send(ApiCommand::GetPlayState(pid, s)).await.expect("NUMM!");
+        let _ = self.channel.send(ApiCommand::GetPlayState(pid, s)).await.expect("NUMM!");
+        r.await.expect("BUMM!")
+    }
+    pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>>{
+        let (s,mut r) = oneshot::channel();
+        let _ = self.channel.send(ApiCommand::GetGroups(s)).await.expect("NUMM!");
         r.await.expect("BUMM!")
     }
 }
@@ -84,6 +102,10 @@ impl CommandExecutor {
                 let command = format!("player/get_play_state?pid={pid}", pid=&pid);
                 let response : HeosResult<PlayerPlayState> = self.execute_command(&command).await;
                 let _ = responder.send( response);
+            },
+            ApiCommand::GetGroups(responder) => {
+                let response = self.execute_command(GET_GROUPS).await;
+                let _ = responder.send(response);
             }
             _ => {}
         }

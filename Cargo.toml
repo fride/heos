@@ -24,6 +24,9 @@ log = "0.4.6"
 thiserror = "1.0.21"
 anyhow = "1.0.52"
 
+## Web
+actix-web = "4.0.1"
+
 [dependencies.druid]
 version = "0.7.0"
 features = ["im", "svg", "image"]
