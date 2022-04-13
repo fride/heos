@@ -12,6 +12,7 @@ pub mod api;
 mod connection;
 mod error;
 pub mod model;
+mod driver;
 
 pub type HeosResult<T> = Result<T, HeosError>;
 

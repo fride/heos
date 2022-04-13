@@ -1,13 +1,17 @@
 use std::io::Cursor;
+use std::sync::mpsc::{Receiver, Sender};
+use async_stream::try_stream;
 
 use bytes::{Buf, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::{TcpStream, ToSocketAddrs};
+use tokio_stream::Stream;
 use tracing::{debug, warn};
 
 pub use frame::*;
 
 use crate::{HeosError, HeosResult};
+use crate::model::event::HeosEvent;
 
 mod discover;
 mod frame;
@@ -54,6 +58,23 @@ impl Connection {
         let addr = self.stream.get_ref().peer_addr()?;
         let stream = TcpStream::connect(addr).await?;
         Ok(Connection::new(stream))
+    }
+
+    pub fn into_event_streamm(mut self) -> impl Stream<Item=HeosResult<HeosEvent>> {
+        println!("!!!!!!!\n\n\n\n\n!!!!!!!\n\n\n\n");
+        try_stream! {
+            let _ = self.write_frame("system/register_for_change_events?enable=on")
+                .await?;
+            let response = self.read_command_response().await?;
+            println!("Listening for events....");
+            loop {
+                let event : HeosEvent = self
+                    .read_event()
+                    .await
+                    .and_then(|e| e.try_into())?;
+                yield event;
+            }
+        }
     }
 
     pub async fn write_frame(&mut self, command: &str) -> crate::HeosResult<()> {
@@ -190,3 +211,4 @@ impl Connection {
         }
     }
 }
+

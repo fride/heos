@@ -36,6 +36,8 @@ async fn manual_hello() -> impl Responder {
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     let api = rusty_heos::create_api().await?;
+    let _ = api.init().await?;
+    println!("Why no events!\n\n\n\n\n");
     let data = Data::new(Mutex::new(api));
 
     // let players = api.get_players().await?;
