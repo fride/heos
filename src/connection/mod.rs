@@ -1,16 +1,55 @@
+use async_stream::try_stream;
+
 use std::io::Cursor;
 
 use bytes::{Buf, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::{TcpStream, ToSocketAddrs};
+use tokio_stream::Stream;
 use tracing::{debug, warn};
 
 pub use frame::*;
+
+use crate::model::event::HeosEvent;
 
 use crate::{HeosError, HeosResult};
 
 mod discover;
 mod frame;
+
+//
+// pub struct HeosCommand<R> {
+//     payload: String,
+//     phantom: PhantomData<R>
+// }
+// impl<R> HeosCommand<R> {
+//     pub fn create<A : std::fmt::Display>(payload: A) -> HeosCommand<R> {
+//         HeosCommand{
+//             payload: format!("{}", payload),
+//             phantom: PhantomData
+//         }
+//     }
+//
+//     pub fn register_for_change_events() -> HeosCommand<()> {
+//         HeosCommand::create("system/register_for_change_events")
+//     }
+//
+//     pub fn check_account() -> HeosCommand<AccountState> {
+//         HeosCommand::create("system/check_account")
+//     }
+//
+//     pub fn sign_in(user_name: &str, password: &str) -> HeosCommand<AccountState> {
+//         HeosCommand::create(format!("system/sign_in?un={name}&pw={password}", name=user_name, password=password))
+//     }
+//     pub fn get_players() -> HeosCommand<Vec<PlayerInfo>> {
+//         HeosCommand::create("player/get_players")
+//     }
+// }
+//
+// trait HeosCommand {
+//     type ResponseType;
+//     fn get_command(&self) -> &String;
+// }
 
 // copied pasted from https://docs.rs/crate/mini-redis/0.4.1/source/src/connection.rs
 #[derive(Debug)]
@@ -54,6 +93,22 @@ impl Connection {
         let addr = self.stream.get_ref().peer_addr()?;
         let stream = TcpStream::connect(addr).await?;
         Ok(Connection::new(stream))
+    }
+
+    pub fn into_event_streamm(mut self) -> impl Stream<Item = HeosResult<HeosEvent>> {
+        try_stream! {
+            let _ = self.write_frame("system/register_for_change_events?enable=on")
+                .await?;
+            let _response = self.read_command_response().await?;
+            println!("Listening for events....");
+            loop {
+                let event : HeosEvent = self
+                    .read_event()
+                    .await
+                    .and_then(|e| e.try_into())?;
+                yield event;
+            }
+        }
     }
 
     pub async fn write_frame(&mut self, command: &str) -> crate::HeosResult<()> {

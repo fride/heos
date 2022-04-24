@@ -48,7 +48,8 @@ async fn get_players(
     connection: &mut Connection,
     result_sender: &Sender<PlayerUpdate>,
 ) -> HeosResult<()> {
-    let response: Vec<PlayerInfo> = send_command(connection, "player/get_players").await?;
+    let response: Vec<PlayerInfo> = send_command(
+        connection, "player/get_players").await?;
     result_sender
         .send(PlayerUpdate::Players(response))
         .await

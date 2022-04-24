@@ -1,131 +1,81 @@
 #[macro_use]
 extern crate serde_derive;
-// extern crate futures;
-extern crate serde_json;
-extern crate serde_qs as qs;
 
-pub use error::{HeosError, HeosErrorCode};
+use std::sync::Mutex;
 
-use crate::api::PlayerUpdate;
-use crate::model::event::HeosEvent;
+use actix_web::middleware::Logger;
+use actix_web::web::Data;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
-mod error;
-pub mod model;
+use pretty_env_logger::env_logger;
 
-mod spielwiese;
-pub type HeosResult<T> = Result<T, HeosError>;
+use rusty_heos::{HeosDriver, HeosResult};
 
-pub mod api;
+mod ui;
 
-#[tokio::main]
-async fn main() -> crate::HeosResult<()> {
-    // let (api, mut results, mut errors) = api::connect("192.168.178.27:1255").await?;
-    let (api, mut results, mut errors) = api::find().await?;
-
-    api.send(api::ApiCommand::GetPlayers).await.unwrap();
-    api.send(api::ApiCommand::GetGroups).await.unwrap();
-
-    loop {
-        tokio::select! {
-            Some(response) = results.recv() => {
-                //println!("{:?}", &response);
-                match response {
-                    PlayerUpdate::Players(players) => {
-                        for p in players {
-                            api.send(api::ApiCommand::GetNowPlaying(p.pid)).await;
-                        }
-                    }
-                    PlayerUpdate::NowPlaying(_) => {}
-                    _ => {}
-                }
-            }
-            Some(error) = errors.recv() => {
-                println!("Got Error: {}", error);
-            }
-        };
-    }
+#[get("/")]
+async fn index(data: Data<Mutex<HeosDriver>>) -> String {
+    let data = data.lock().unwrap();
+    let zones = data.zones();
+    let str = serde_json::to_string_pretty(&zones).unwrap();
+    format!("{}", str)
 }
 
-mod foo {
+#[post("/echo")]
+async fn echo(req_body: String) -> impl Responder {
+    HttpResponse::Ok().body(req_body)
+}
 
-    use tokio::sync::mpsc;
-    use tokio::sync::oneshot;
+async fn manual_hello() -> impl Responder {
+    HttpResponse::Ok().body("Hey there!")
+}
 
-    use crate::model::group::GroupInfo;
-    use crate::model::player::{NowPlayingMedia, NowPlayingProgress, PlayerInfo, PlayState};
-    use crate::model::PlayerId;
+#[actix_web::main]
+async fn main() -> crate::HeosResult<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
+    let driver = rusty_heos::create_driver(connection).await?;
+    driver.init().await;
 
-    use super::*;
+    // use std::{thread, time};
+    //
+    // let ten_millis = time::Duration::from_secs(10);
+    // let _now = time::Instant::now();
+    //
+    // thread::sleep(ten_millis);
+    //
+    // let zones = driver.zones();
+    // for zone in zones {
+    //     println!("\t{:?}", &zone)
+    // }
 
-    pub enum HeosCommand {
-        LoadSources,
-        LoadPlayers,
-        LoadGroups,
-        LoadNowPlayingMedia(PlayerId),
-    }
+    let data = Data::new(Mutex::new(driver));
 
-    pub enum ModelUpdate {
-        SetPlayers(Vec<PlayerInfo>),
-        SetGroups(Vec<GroupInfo>),
-        SetPlayState(PlayerId, PlayState),
-        SetNowPlaying(PlayerId, NowPlayingMedia),
-        SetNowPlayingProgress(NowPlayingProgress),
-    }
+    // let players = api.get_players().await?;
+    // println!("Got my player: {:?}", &players);
+    // for player in &players {
+    //     let res = api.get_play_state(player.pid.clone()).await.expect("BUMS!");
+    //     println!("{:?}", res);
+    //
+    //     let (mut r, cmd) = ApiCommand::get_player_volume(player.pid.clone());
+    //     api.execute_command(cmd).await;
+    //     let res2 = r.await.unwrap();
+    //     println!("{:?}", res2);
+    // }
+    HttpServer::new(move || {
+        App::new()
+            .app_data(data.clone())
+            // .data_factory(||{
+            //     rusty_heos::create_api()
+            // })
+            .service(index)
+            .service(echo)
+            .wrap(Logger::new("%a %{User-Agent}i"))
+            .route("/hey", web::get().to(manual_hello))
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await;
 
-    async fn event_handler(
-        event: HeosEvent,
-        model_updates: mpsc::Sender<ModelUpdate>,
-        command_channel: mpsc::Sender<HeosCommand>,
-    ) {
-        match event {
-            HeosEvent::SourcesChanged => {
-                command_channel.send(HeosCommand::LoadSources).await;
-            }
-            HeosEvent::PlayersChanged => {
-                command_channel.send(HeosCommand::LoadPlayers).await;
-            }
-            HeosEvent::GroupChanged => {
-                command_channel.send(HeosCommand::LoadGroups).await;
-            }
-            HeosEvent::PlayerStateChanged { player_id, state } => {
-                model_updates
-                    .send(ModelUpdate::SetPlayState(player_id, state))
-                    .await;
-            }
-            HeosEvent::PlayerNowPlayingChanged { player_id } => {
-                command_channel
-                    .send(HeosCommand::LoadNowPlayingMedia(player_id))
-                    .await;
-            }
-            HeosEvent::PlayerNowPlayingProgress {
-                player_id,
-                cur_pos,
-                duration,
-            } => {
-                model_updates
-                    .send(ModelUpdate::SetNowPlayingProgress(NowPlayingProgress {
-                        player_id,
-                        current_position: cur_pos,
-                        duration_in_ms: duration.unwrap(),
-                    }))
-                    .await;
-            }
-            HeosEvent::PlayerPlaybackError { .. } => {}
-            HeosEvent::PlayerVolumeChanged { .. } => {}
-            HeosEvent::PlayerQueueChanged { .. } => {}
-            HeosEvent::PlayerRepeatModeChanged { .. } => {}
-            HeosEvent::PlayerShuffleModeChanged { .. } => {}
-            HeosEvent::GroupVolumeChanged { .. } => {}
-            HeosEvent::UserChanged { .. } => {}
-        }
-    }
-
-    enum ResponseChannel<T> {
-        Mpsc(mpsc::Sender<HeosResult<T>>),
-        OneShot(oneshot::Sender<T>),
-    }
-
-    enum FooBarCommand {
-        GetPlayers(mpsc::Sender<HeosResult<Vec<PlayerInfo>>>),
-    }
+    Ok(())
 }

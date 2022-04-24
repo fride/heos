@@ -1,9 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-// TODO the data is ugly here!
-use druid::Data;
-
 use crate::model::{Milliseconds, OnOrOff};
 use crate::HeosError;
 
@@ -52,7 +49,6 @@ impl std::str::FromStr for PlayState {
 
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct PlayerPlayState {
-    #[serde(alias = "pid")]
     pub player_id: PlayerId,
     pub state: PlayState,
 }
@@ -97,6 +93,8 @@ pub struct PlayerInfo {
     pub control: Option<String>,
 }
 
+// TODO the data is ugly here!
+use druid::Data;
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq, Eq, Data)]
 pub enum MediaType {
     #[serde(rename = "song")]
@@ -104,6 +102,7 @@ pub enum MediaType {
     #[serde(rename = "station")]
     Station,
 }
+
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, Data)]
 pub struct NowPlayingMedia {
@@ -144,9 +143,8 @@ impl From<(PlayerId, Level)> for PlayerVolume {
     }
 }
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub struct PlayerStepLevel {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub step: u8,
 }
@@ -164,21 +162,18 @@ pub struct QueueEntry {
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct PlayerPlayMode {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub mode: super::PlayMode,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct PlayerMute {
-    #[serde(rename = "pid")]
     pub player_id: i64,
     pub state: OnOrOff,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct NowPlayingProgress {
-    #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub current_position: Milliseconds,
     pub duration_in_ms: Milliseconds,

@@ -58,7 +58,6 @@ pub enum HeosError {
     #[error("Some damn error: {message} ")]
     Error { message: String },
 
-    // does not handle tokio::sync::oneshot::error::RecvError?
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
