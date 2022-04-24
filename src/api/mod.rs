@@ -12,7 +12,6 @@ use crate::{HeosError, HeosResult};
 
 mod parsers;
 
-
 // pub struct HeosState {
 //     pub players: Vec<PlayerInfo>,
 //     pub groups: Vec<GroupInfo>,

@@ -1,5 +1,6 @@
 pub mod state;
 
+use im::Vector;
 use std::sync::{Arc, Mutex};
 
 use tokio::sync::mpsc;
@@ -85,17 +86,29 @@ fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<ApiRes
                     let mut state = state.lock().unwrap();
                     state.set_groups(groups);
                 }
-                ApiResults::PlayerVolumes(_) => {}
+                ApiResults::PlayerVolumes(player_volume) => {
+                    println!("Set Player volume");
+                    let mut state = state.lock().unwrap();
+                    state.update_player(player_volume.player_id.clone(), move |player| {
+                        player.volume = Some(player_volume.level.clone());
+                    })
+                }
                 ApiResults::GroupVolumes(_) => {}
                 ApiResults::PlayerNowPlaying(player_now_playing) => {
+                    println!("Setting now playin");
                     let mut state = state.lock().unwrap();
                     state.update_player(player_now_playing.player_id.clone(), move |player| {
                         player.now_playing = Some(player_now_playing.media.clone());
-                        // TODO I don't get the need for clone here!
                     })
                 }
                 ApiResults::GroupVolumeChanged(_, _, _) => {}
-                ApiResults::PlayerVolumeChanged(_, _, _) => {}
+                ApiResults::PlayerVolumeChanged(player_id, level, mute) => {
+                    let mut state = state.lock().unwrap();
+                    state.update_player(player_id.clone(), move |player| {
+                        player.volume = Some(level.clone());
+                        player.mute = Some(mute.clone());
+                    })
+                }
                 ApiResults::PlayerPlayStateChanged(_, _) => {}
                 ApiResults::Error(_) => {}
             }
@@ -118,9 +131,18 @@ async fn handle_command(
             response.map(|res| vec![ApiResults::Groups(res)])
         }
         ApiCommand::RefreshState => load_state(connection).await,
-        ApiCommand::LoadPlayerVolume(_) => Ok(vec![]),
-        ApiCommand::LoadGroupVolume(_) => Ok(vec![]),
-        ApiCommand::LoadNowPLaying(_) => Ok(vec![]),
+        ApiCommand::LoadPlayerVolume(pid) => connection
+            .get_volume(pid)
+            .await
+            .map(|v| vec![ApiResults::PlayerVolumes(v)]),
+        ApiCommand::LoadGroupVolume(gid) => {
+            let volume = connection.get_group_volume(gid).await;
+            volume.map(|v| vec![ApiResults::GroupVolumes(v)])
+        }
+        ApiCommand::LoadNowPLaying(pid) => connection
+            .get_now_playing_media(pid)
+            .await
+            .map(|now| vec![ApiResults::PlayerNowPlaying(now)]),
     };
     match response {
         Ok(responses) => {
@@ -129,34 +151,31 @@ async fn handle_command(
             }
         }
         Err(err) => {
+            println!("Command failed! {:?}", &err);
             results.send(ApiResults::Error(err)).await;
         }
     }
 }
 
 async fn load_state(connection: &mut Connection) -> Result<Vec<ApiResults>, HeosError> {
-    println!("Loading state");
     let mut responses = vec![];
     let players: Vec<PlayerInfo> = connection.load_players().await?;
-    println!("Loading state 1");
     let groups: Vec<GroupInfo> = connection.get_groups().await?;
-    println!("Loading state 2");
-    for player in &players {
-        let now_playing = connection.get_now_playing_media(player.pid).await?;
+    let pids: Vector<PlayerId> = players.iter().map(|p| p.pid).collect();
+    let gids: Vector<GroupId> = groups.iter().map(|p| p.gid).collect();
+    responses.push(ApiResults::Players(players));
+    responses.push(ApiResults::Groups(groups));
+
+    for pid in &pids {
+        let now_playing = connection.get_now_playing_media(pid.clone()).await?;
         responses.push(ApiResults::PlayerNowPlaying(now_playing));
-        let player_volume = connection.get_volume(player.pid).await?;
+        let player_volume = connection.get_volume(pid.clone()).await?;
         responses.push(ApiResults::PlayerVolumes(player_volume));
     }
-    println!("Loading state 3");
-    responses.push(ApiResults::Players(players));
-    for group in &groups {
-        println!("Loading state 3 : {}", &group.gid);
-        let group_volume = connection.get_group_volume(group.gid).await?;
+    for gid in &gids {
+        let group_volume = connection.get_group_volume(gid.clone()).await?;
         responses.push(ApiResults::GroupVolumes(group_volume));
     }
-    println!("Loading state 4");
-    responses.push(ApiResults::Groups(groups));
-    println!("Loading Done");
     Ok(responses)
 }
 
