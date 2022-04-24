@@ -4,12 +4,12 @@ use std::fmt::Formatter;
 // TODO the data is ugly here!
 use druid::Data;
 
-use crate::HeosError;
 use crate::model::{Milliseconds, OnOrOff};
+use crate::HeosError;
 
+use super::common::Time;
 use super::{AlbumId, GroupId, Level, PlayerId, QueueId};
 use super::{MediaId, SourceId};
-use super::common::Time;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum PlayState {

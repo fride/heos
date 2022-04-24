@@ -1,115 +1,233 @@
-use std::collections::BTreeMap;
+pub mod state;
+
 use std::sync::{Arc, Mutex};
-use druid::platform_menus::win::file::new;
-use serde::{Deserialize, Serialize};
-use crate::{ApiCommand, HeosApi, HeosResult};
-use anyhow::{Context, Result};
 
-use crate::model::group::GroupInfo;
-use crate::model::Level;
-use crate::model::player::{NowPlayingMedia, PlayerInfo};
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::{Receiver, Sender};
+use tokio_stream::StreamExt;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Player {
-    pub name: String,
-    pub id: i64,
-    pub volume: Option<Level>,
-    pub now_playing: Option<NowPlayingMedia>,
+use crate::connection::Connection;
+use crate::driver::state::DriverState;
+use crate::model::event::HeosEvent;
+use crate::model::group::{GroupInfo, GroupVolume};
+use crate::model::player::{PlayState, PlayerInfo, PlayerNowPlayingMedia, PlayerVolume};
+use crate::model::{GroupId, Level, OnOrOff, PlayerId};
+use crate::{HeosError, HeosResult};
+
+use crate::api::HeosApi;
+pub use state::{Player, Zone};
+
+#[derive(Debug, Clone)]
+pub enum ApiCommand {
+    GetPlayers,
+    GetGroups,
+    RefreshState,
+    LoadPlayerVolume(PlayerId),
+    LoadGroupVolume(PlayerId),
+    LoadNowPLaying(PlayerId),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Group {
-    pub name: String,
-    pub id: i64,
-    pub volume: Option<Level>,
-    pub players: Vec<Player>,
+pub enum ApiResults {
+    Players(Vec<PlayerInfo>),
+    Groups(Vec<GroupInfo>),
+    PlayerVolumes(PlayerVolume),
+    GroupVolumes(GroupVolume),
+    PlayerNowPlaying(PlayerNowPlayingMedia),
+    GroupVolumeChanged(GroupId, Level, OnOrOff),
+    PlayerVolumeChanged(PlayerId, Level, OnOrOff),
+    PlayerPlayStateChanged(PlayerId, PlayState),
+    Error(HeosError),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Players {
-    pub ungrouped: Vec<Player>,
-    pub grouped: Vec<Group>,
-}
+type Shared<T> = Arc<Mutex<T>>;
 
-#[derive(Clone)]
-pub struct HeosDriver{
-    api: HeosApi,
-    players: Arc<Mutex<Players>>
-}
+pub struct HeosDriver(Sender<ApiCommand>, Shared<DriverState>);
 
 impl HeosDriver {
-    pub async fn new(api: HeosApi) -> Self{
-        Self { api,
-            players : Arc::new(Mutex::new(Players::default()))}
+    pub async fn new(connection: Connection) -> HeosResult<Self> {
+        setup(connection).await
     }
-
-    pub fn get_players(&self) -> Players {
-        let mutex_guard = self.players.lock().unwrap();
-        let cloned = mutex_guard.clone();
-        cloned
+    pub async fn init(&self) {
+        self.0.send(ApiCommand::RefreshState).await;
     }
-
-    pub async fn init(&mut self) -> HeosResult<()>{
-        println!("1");
-        let (s,mut r) = tokio::sync::oneshot::channel();
-        self.api.execute_command(ApiCommand::RegisterForChangeEvents(s)).await;
-        // anyhow!?
-        let mut events = r.await.map_err(|error|anyhow::Error::new(error))??;
-        println!("2");
-        //let api_clone = self.api.clone();
-        tokio::spawn(async move {
-            println!("Waiting for events");
-            while let Some(event) = events.recv().await {
-                println!("Got an event: {:?}", &event);
-            }
-        });
-        println!("3");
-        let new_players = self.api.get_players().await?;
-        let new_groups = self.api.get_groups().await?;
-        let mut players = self.players.lock().unwrap();
-        *players = (new_players, new_groups).into();
-        println!("4");
-        Ok(())
+    pub fn zones(&self) -> Vec<Zone> {
+        let state = self.1.lock().unwrap();
+        state.zone_iter().cloned().collect()
     }
 }
 
+async fn setup(mut connection: Connection) -> HeosResult<HeosDriver> {
+    println!("Setting up");
+    let event_connection = connection.try_clone().await?;
+    let state = Arc::new(Mutex::new(DriverState::default()));
 
-// impls ....
-impl From<(Vec<PlayerInfo>, Vec<GroupInfo>)> for Players {
-    fn from(source: (Vec<PlayerInfo>, Vec<GroupInfo>)) -> Self {
-        let mut players: BTreeMap<i64, Player> = source
-            .0
-            .into_iter()
-            .map(|p| (p.pid.clone(), p.into()))
-            .collect();
+    let (command_send, command_rec) = mpsc::channel::<ApiCommand>(12);
+    let (result_send, result_rec) = mpsc::channel::<ApiResults>(12);
 
-        let grouped: Vec<Group> = source
-            .1
-            .into_iter()
-            .map(|group_info| {
-                let mut players = group_info
-                    .players
-                    .iter()
-                    .filter_map(|group_info| players.remove(&group_info.pid))
-                    .collect();
-                Group {
-                    name: group_info.name,
-                    id: group_info.gid,
-                    volume: None,
-                    players,
+    create_command_handler(connection, command_rec, result_send.clone());
+    create_event_handler(event_connection, command_send.clone(), result_send.clone());
+    create_state_handler(state.clone(), result_rec);
+
+    println!("All done");
+    Ok(HeosDriver(command_send, state))
+}
+
+fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<ApiResults>) {
+    tokio::spawn(async move {
+        // TODO add timestamps and waiting indeicators. ;)
+        while let Some(result) = results.recv().await {
+            match result {
+                ApiResults::Players(players) => {
+                    let mut state = state.lock().unwrap();
+                    state.set_players(players);
                 }
-            })
-            .collect();
-        let ungrouped = players.into_values().collect();
-        Self { grouped, ungrouped }
-    }
+                ApiResults::Groups(groups) => {
+                    let mut state = state.lock().unwrap();
+                    state.set_groups(groups);
+                }
+                ApiResults::PlayerVolumes(_) => {}
+                ApiResults::GroupVolumes(_) => {}
+                ApiResults::PlayerNowPlaying(player_now_playing) => {
+                    let mut state = state.lock().unwrap();
+                    state.update_player(player_now_playing.player_id.clone(), move |player| {
+                        player.now_playing = Some(player_now_playing.media.clone());
+                        // TODO I don't get the need for clone here!
+                    })
+                }
+                ApiResults::GroupVolumeChanged(_, _, _) => {}
+                ApiResults::PlayerVolumeChanged(_, _, _) => {}
+                ApiResults::PlayerPlayStateChanged(_, _) => {}
+                ApiResults::Error(_) => {}
+            }
+        }
+    });
 }
-impl From<PlayerInfo> for Player {
-    fn from(source: PlayerInfo) -> Self {
-        Player {
-            name: source.name,
-            id: source.pid,
-            ..Default::default()
+
+async fn handle_command(
+    command: ApiCommand,
+    connection: &mut Connection,
+    results: &mpsc::Sender<ApiResults>,
+) {
+    let response = match command {
+        ApiCommand::GetPlayers => {
+            let response = connection.load_players().await;
+            response.map(|res| vec![ApiResults::Players(res)])
+        }
+        ApiCommand::GetGroups => {
+            let response = connection.get_groups().await;
+            response.map(|res| vec![ApiResults::Groups(res)])
+        }
+        ApiCommand::RefreshState => load_state(connection).await,
+        ApiCommand::LoadPlayerVolume(_) => Ok(vec![]),
+        ApiCommand::LoadGroupVolume(_) => Ok(vec![]),
+        ApiCommand::LoadNowPLaying(_) => Ok(vec![]),
+    };
+    match response {
+        Ok(responses) => {
+            for response in responses {
+                results.send(response).await;
+            }
+        }
+        Err(err) => {
+            results.send(ApiResults::Error(err)).await;
         }
     }
+}
+
+async fn load_state(connection: &mut Connection) -> Result<Vec<ApiResults>, HeosError> {
+    println!("Loading state");
+    let mut responses = vec![];
+    let players: Vec<PlayerInfo> = connection.load_players().await?;
+    println!("Loading state 1");
+    let groups: Vec<GroupInfo> = connection.get_groups().await?;
+    println!("Loading state 2");
+    for player in &players {
+        let now_playing = connection.get_now_playing_media(player.pid).await?;
+        responses.push(ApiResults::PlayerNowPlaying(now_playing));
+        let player_volume = connection.get_volume(player.pid).await?;
+        responses.push(ApiResults::PlayerVolumes(player_volume));
+    }
+    println!("Loading state 3");
+    responses.push(ApiResults::Players(players));
+    for group in &groups {
+        println!("Loading state 3 : {}", &group.gid);
+        let group_volume = connection.get_group_volume(group.gid).await?;
+        responses.push(ApiResults::GroupVolumes(group_volume));
+    }
+    println!("Loading state 4");
+    responses.push(ApiResults::Groups(groups));
+    println!("Loading Done");
+    Ok(responses)
+}
+
+pub fn create_command_handler(
+    mut connection: Connection,
+    mut commands: mpsc::Receiver<ApiCommand>,
+    results: mpsc::Sender<ApiResults>,
+) {
+    println!("Setting up create_command_handler");
+    tokio::spawn(async move {
+        println!("Waiting for commands ");
+        while let Some(command) = commands.recv().await {
+            println!("Got command {:?}", &command);
+            handle_command(command, &mut connection, &results).await;
+        }
+    });
+}
+
+pub fn create_event_handler(
+    connection: Connection,
+    commands: mpsc::Sender<ApiCommand>,
+    results: mpsc::Sender<ApiResults>,
+) {
+    tokio::spawn(async move {
+        let events = connection.into_event_streamm();
+        tokio::pin!(events);
+        while let Some(event) = events.next().await {
+            match event {
+                Err(_e) => {
+                    println!("Error");
+                }
+                Ok(HeosEvent::PlayersChanged) => {
+                    commands.send(ApiCommand::GetPlayers).await;
+                }
+                Ok(HeosEvent::SourcesChanged) => {}
+                Ok(HeosEvent::GroupChanged) => {
+                    commands.send(ApiCommand::GetGroups).await;
+                }
+                Ok(HeosEvent::PlayerStateChanged { player_id, state }) => {
+                    results
+                        .send(ApiResults::PlayerPlayStateChanged(player_id, state))
+                        .await;
+                }
+                Ok(HeosEvent::PlayerNowPlayingChanged { player_id }) => {
+                    commands.send(ApiCommand::LoadNowPLaying(player_id)).await;
+                }
+                Ok(HeosEvent::PlayerNowPlayingProgress { .. }) => {}
+                Ok(HeosEvent::PlayerPlaybackError { .. }) => {}
+                Ok(HeosEvent::PlayerVolumeChanged {
+                    player_id,
+                    level,
+                    mute,
+                }) => {
+                    results
+                        .send(ApiResults::GroupVolumeChanged(player_id, level, mute))
+                        .await;
+                }
+                Ok(HeosEvent::PlayerQueueChanged { .. }) => {}
+                Ok(HeosEvent::PlayerRepeatModeChanged { .. }) => {}
+                Ok(HeosEvent::PlayerShuffleModeChanged { .. }) => {}
+                Ok(HeosEvent::GroupVolumeChanged {
+                    group_id,
+                    level,
+                    mute,
+                }) => {
+                    results
+                        .send(ApiResults::GroupVolumeChanged(group_id, level, mute))
+                        .await;
+                }
+                Ok(HeosEvent::UserChanged { .. }) => {}
+            }
+        }
+    });
 }

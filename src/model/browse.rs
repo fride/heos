@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use super::SourceId;
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]

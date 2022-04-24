@@ -1,154 +1,213 @@
-use std::mem::transmute;
-use std::sync::{Arc, Mutex};
+use async_trait::async_trait;
+use std::fmt::Display;
 
-use async_stream::try_stream;
-use tokio::sync::mpsc;
-use tokio::sync::oneshot;
-use tokio::sync::oneshot::{channel, Receiver};
-use tokio_stream::Stream;
-use tokio_stream::StreamExt;
-
-use parsers::*;
-
+use crate::connection::{CommandResponse, Connection};
+use crate::model::group::{GroupInfo, GroupVolume};
+use crate::model::player::{
+    PlayState, PlayerInfo, PlayerMute, PlayerNowPlayingMedia, PlayerPlayMode, PlayerPlayState,
+    PlayerVolume, QueueEntry,
+};
+use crate::model::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range};
 use crate::{HeosError, HeosResult};
-use crate::api::state::HeosState;
-use crate::connection::*;
-use crate::model::event::HeosEvent;
-use crate::model::group::GroupInfo;
-use crate::model::player::{NowPlayingMedia, PlayerInfo, PlayerPlayState, PlayerVolume, PlayState};
-use crate::model::PlayerId;
 
 mod parsers;
-mod state;
 
-pub type Responder<T> = oneshot::Sender<HeosResult<T>>;
-pub type Listener<T> = oneshot::Receiver<HeosResult<T>>;
 
-const GET_PLAYERS: &'static str = "player/get_players";
-const GET_GROUPS: &'static str = "group/get_groups";
+// pub struct HeosState {
+//     pub players: Vec<PlayerInfo>,
+//     pub groups: Vec<GroupInfo>,
+//     pub player_volumes: Vec<PlayerVolume>,
+//     pub group_volumes: Vec<GroupVolume>
+//     pub group_volumes: Vec<GroupVolume>
+// }
 
-#[derive(Debug)]
-pub enum ApiCommand {
-    GetPlayers(Responder<Vec<PlayerInfo>>),
-    GetPlayState(PlayerId, Responder<PlayerPlayState>),
-    GetPlayerVolume(PlayerId, Responder<PlayerVolume>),
-    GetNowPlayingMedia(PlayerId, Responder<NowPlayingMedia>),
-    GetGroups(Responder<Vec<GroupInfo>>),
-    RegisterForChangeEvents(Responder<mpsc::Receiver<HeosResult<HeosEvent>>>),
-}
-impl ApiCommand {
-    pub fn get_player_volume(pid: PlayerId) -> (Listener<PlayerVolume>, ApiCommand) {
-        let (s, mut r) = channel();
-        (r, Self::GetPlayerVolume(pid, s))
-    }
-}
-pub type HeosApiChannel = mpsc::Sender<ApiCommand>;
+#[async_trait]
+pub trait HeosApi {
+    async fn load_players(&mut self) -> HeosResult<Vec<PlayerInfo>>;
+    async fn get_play_state(&mut self, player_id: PlayerId) -> HeosResult<PlayerPlayState>;
+    async fn set_play_state(
+        &mut self,
+        player_id: PlayerId,
+        state: PlayState,
+    ) -> HeosResult<PlayerPlayState>;
+    async fn get_now_playing_media(
+        &mut self,
+        player_id: PlayerId,
+    ) -> HeosResult<PlayerNowPlayingMedia>;
+    async fn get_volume(&mut self, player_id: PlayerId) -> HeosResult<PlayerVolume>;
+    async fn set_volume(&mut self, player_id: PlayerId, level: Level) -> HeosResult<PlayerVolume>;
+    async fn get_mute(&mut self, player_id: PlayerId) -> HeosResult<PlayerMute>;
+    async fn set_mute(&mut self, player_id: PlayerId, state: OnOrOff) -> HeosResult<PlayerMute>;
+    async fn get_play_mode(&mut self, player_id: PlayerId) -> HeosResult<PlayerPlayMode>;
+    async fn set_play_mode(
+        &mut self,
+        player_id: PlayerId,
+        mode: PlayMode,
+    ) -> HeosResult<PlayerPlayMode>;
+    async fn get_queue(&mut self, player_id: PlayerId, range: Range)
+        -> HeosResult<Vec<QueueEntry>>;
 
-#[derive(Clone)]
-pub struct HeosApi {
-    channel: HeosApiChannel,
-    state: state::HeosState
-}
+    async fn get_groups(&mut self) -> HeosResult<Vec<GroupInfo>>;
+    async fn set_group(&mut self, players: Vec<PlayerId>) -> HeosResult<Vec<GroupInfo>>;
 
-impl HeosApi {
-    pub async fn connect(mut connection: crate::connection::Connection) -> HeosResult<Self> {
-        let (s, mut r) = mpsc::channel(12);
-        // spawn command execution in back ground
-        let state: HeosState = Arc::new(Mutex::new(state::Players::default()));
-        tokio::spawn(async move {
-            let mut executor = CommandExecutor(connection);
-            while let Some(cmd) = r.recv().await {
-                let _ = executor.execute(cmd).await;
-            }
-        });
-        Ok(Self { channel: s, state })
-    }
-    pub async fn execute_command(&self, command: ApiCommand) {
-        self.channel.send(command).await;
-    }
+    async fn get_group_volume(&mut self, group_id: GroupId) -> HeosResult<GroupVolume>;
+    async fn set_group_volume(
+        &mut self,
+        group_id: GroupId,
+        level: Level,
+    ) -> HeosResult<GroupVolume>;
 
-    pub async fn init(&self) -> HeosResult<()> {
-        let players = self.get_players().await?;
-        let groups = self.get_groups().await?;
+    // loads all intersting stuff in one run.
+    //
+    async fn load(
+        &mut self,
+    ) -> HeosResult<(Vec<PlayerInfo>, Vec<GroupInfo>, Vec<PlayerNowPlayingMedia>)> {
+        let players: Vec<PlayerInfo> = self.load_players().await?;
+        let groups: Vec<GroupInfo> = self.get_groups().await?;
+        let mut player_now_playing = vec![];
         for player in &players {
-            let play_state = self.get_play_state(player.pid.clone()).await?;
+            let now_playing = self.get_now_playing_media(player.pid).await?;
+            player_now_playing.push(now_playing);
         }
-        state::update(&mut self.state.clone(), players, groups);
-        Ok(())
-    }
-    pub async fn get_players(&self) -> HeosResult<Vec<PlayerInfo>> {
-        let (s, mut r) = oneshot::channel();
-        let _ = self
-            .channel
-            .send(ApiCommand::GetPlayers(s))
-            .await
-            .expect("NUMM!");
-        r.await.expect("BUMM!")
-    }
-    pub async fn get_play_state(&self, pid: PlayerId) -> HeosResult<PlayerPlayState> {
-        let (s, mut r) = oneshot::channel();
-        let _ = self
-            .channel
-            .send(ApiCommand::GetPlayState(pid, s))
-            .await
-            .expect("NUMM!");
-        r.await.expect("BUMM!")
-    }
-    pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>> {
-        let (s, mut r) = oneshot::channel();
-        let _ = self
-            .channel
-            .send(ApiCommand::GetGroups(s))
-            .await
-            .expect("NUMM!");
-        r.await.expect("BUMM!")
+        Ok((players, groups, player_now_playing))
     }
 }
 
-struct CommandExecutor(Connection);
-impl CommandExecutor {
-    pub async fn execute(&mut self, command: ApiCommand) {
-        match command {
-            ApiCommand::GetPlayers(responder) => {
-                let response = self.execute_command(GET_PLAYERS).await;
-                let _ = responder.send(response);
-            }
-            ApiCommand::GetPlayerVolume(pid, responder) => {
-                let response = self
-                    .execute_command(&format!("player/get_volume?pid={pid}", pid = pid))
-                    .await;
-                let _ = responder.send(response);
-            }
-            ApiCommand::GetPlayState(pid, responder) => {
-                let command = format!("player/get_play_state?pid={pid}", pid = &pid);
-                let response: HeosResult<PlayerPlayState> = self.execute_command(&command).await;
-                let _ = responder.send(response);
-            }
-            ApiCommand::GetGroups(responder) => {
-                let response = self.execute_command(GET_GROUPS).await;
-                let _ = responder.send(response);
-            },
-            ApiCommand::RegisterForChangeEvents(responder) => {
-                let mut events = self.0.try_clone().await.expect("Cant clone").into_event_streamm();
-                let (event_tx, event_rx) = mpsc::channel(30);
-                tokio::spawn(async move {
-                    tokio::pin!(events);
-                    while let Some(event) = events.next().await {
-                        event_tx.send(event).await;
-                    }
-                });
-                let _ = responder.send(Ok(event_rx));
-            }
-            _ => {}
-        }
-    }
-    async fn execute_command<T>(&mut self, command: &str) -> HeosResult<T>
+#[async_trait]
+trait CommandExecutor {
+    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
     where
-        T: TryFrom<CommandResponse, Error = HeosError>,
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>;
+}
+
+#[async_trait]
+impl CommandExecutor for Connection {
+    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
+    where
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>,
     {
-        println!("Sending: {}", command);
-        let _ = self.0.write_frame(&command).await?;
-        let response = self.0.read_command_response().await?;
+        let _ = self.write_frame(&format!("{}", command)).await?;
+        let response = self.read_command_response().await?;
         response.try_into()
+    }
+}
+
+#[async_trait]
+impl HeosApi for Connection {
+    async fn load_players(&mut self) -> HeosResult<Vec<PlayerInfo>> {
+        self.execute_command("player/get_players").await
+    }
+
+    async fn get_play_state(&mut self, player_id: PlayerId) -> HeosResult<PlayerPlayState> {
+        self.execute_command(format!("player/get_play_state?pid={pid}", pid = player_id))
+            .await
+    }
+    async fn set_play_state(
+        &mut self,
+        player_id: PlayerId,
+        play_state: PlayState,
+    ) -> HeosResult<PlayerPlayState> {
+        self.execute_command(format!(
+            "player/set_play_state?pid={pid}&state={state}",
+            pid = player_id,
+            state = play_state
+        ))
+        .await
+    }
+
+    async fn get_now_playing_media(
+        &mut self,
+        player_id: PlayerId,
+    ) -> HeosResult<PlayerNowPlayingMedia> {
+        self.execute_command(format!("player/get_now_playing_media?pid={}", player_id))
+            .await
+    }
+    async fn get_volume(&mut self, player_id: PlayerId) -> HeosResult<PlayerVolume> {
+        self.execute_command(format!("player/get_volume?pid={}", player_id))
+            .await
+    }
+    async fn set_volume(&mut self, player_id: PlayerId, level: Level) -> HeosResult<PlayerVolume> {
+        self.execute_command(format!(
+            "player/set_volume?pid={pid}&level={level}",
+            pid = player_id,
+            level = level
+        ))
+        .await
+    }
+
+    async fn get_mute(&mut self, player_id: PlayerId) -> HeosResult<PlayerMute> {
+        self.execute_command(format!("player/get_mute?pid={pid}", pid = player_id))
+            .await
+    }
+    async fn set_mute(&mut self, player_id: PlayerId, state: OnOrOff) -> HeosResult<PlayerMute> {
+        self.execute_command(format!(
+            "player/set_mute?pid={pid}&state={state}",
+            pid = player_id,
+            state = state
+        ))
+        .await
+    }
+    async fn get_play_mode(&mut self, player_id: PlayerId) -> HeosResult<PlayerPlayMode> {
+        self.execute_command(format!("player/get_play_mode?pid={pid}", pid = player_id))
+            .await
+    }
+
+    async fn set_play_mode(
+        &mut self,
+        player_id: PlayerId,
+        mode: PlayMode,
+    ) -> HeosResult<PlayerPlayMode> {
+        self.execute_command(format!(
+            "player/set_play_mode?pid={pid}&repeat={repeat}&shuffle={shuffle}",
+            pid = player_id,
+            repeat = mode.repeat,
+            shuffle = mode.shuffle
+        ))
+        .await
+    }
+    async fn get_queue(
+        &mut self,
+        player_id: PlayerId,
+        range: Range,
+    ) -> HeosResult<Vec<QueueEntry>> {
+        self.execute_command(format!(
+            "player/get_queue?pid={pid}&range={start},{end}",
+            pid = player_id,
+            start = range.start,
+            end = range.end
+        ))
+        .await
+    }
+
+    async fn get_groups(&mut self) -> HeosResult<Vec<GroupInfo>> {
+        self.execute_command("group/get_groups").await
+    }
+    async fn set_group(&mut self, players: Vec<PlayerId>) -> HeosResult<Vec<GroupInfo>> {
+        let pids = players
+            .into_iter()
+            .map(|pid| pid.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+        self.execute_command(format!("group/set_group?pid={pids}", pids = pids))
+            .await
+    }
+
+    async fn get_group_volume(&mut self, group_id: GroupId) -> HeosResult<GroupVolume> {
+        self.execute_command(format!("group/get_volume?gid={}", group_id))
+            .await
+    }
+    async fn set_group_volume(
+        &mut self,
+        group_id: GroupId,
+        level: Level,
+    ) -> HeosResult<GroupVolume> {
+        self.execute_command(format!(
+            "player/set_volume?pid={pid}&level={level}",
+            pid = group_id,
+            level = level
+        ))
+        .await
     }
 }

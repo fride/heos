@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
 
-use serde::{Deserialize, Serialize};
-
 use rusty_heos::model::group::GroupInfo;
-use rusty_heos::model::Level;
 use rusty_heos::model::player::{NowPlayingMedia, PlayerInfo};
+use rusty_heos::model::Level;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Player {
@@ -40,7 +38,7 @@ impl From<(Vec<PlayerInfo>, Vec<GroupInfo>)> for Players {
             .1
             .into_iter()
             .map(|group_info| {
-                let mut players = group_info
+                let players = group_info
                     .players
                     .iter()
                     .filter_map(|group_info| players.remove(&group_info.pid))

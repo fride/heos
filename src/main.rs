@@ -1,26 +1,24 @@
 #[macro_use]
 extern crate serde_derive;
 
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
-use actix_web::{App, get, HttpResponse, HttpServer, post, Responder, web};
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+
 use pretty_env_logger::env_logger;
 
-use rusty_heos::api::{ApiCommand, HeosApi};
-use rusty_heos::HeosResult;
+use rusty_heos::{HeosDriver, HeosResult};
 
 mod ui;
 
 #[get("/")]
-async fn index(data: Data<Mutex<HeosApi>>) -> String {
+async fn index(data: Data<Mutex<HeosDriver>>) -> String {
     let data = data.lock().unwrap();
-    let players = data.get_players().await.unwrap();
-    let groups = data.get_groups().await.unwrap();
-    let json: ui::Players = (players, groups).into();
-    serde_json::to_string_pretty(&json).unwrap()
+    let zones = data.zones();
+    let str = serde_json::to_string_pretty(&zones).unwrap();
+    format!("{}", str)
 }
 
 #[post("/echo")]
@@ -35,10 +33,23 @@ async fn manual_hello() -> impl Responder {
 #[actix_web::main]
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
-    let api = rusty_heos::create_api().await?;
-    let _ = api.init().await?;
-    println!("Why no events!\n\n\n\n\n");
-    let data = Data::new(Mutex::new(api));
+    let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
+    let driver = rusty_heos::create_driver(connection).await?;
+    driver.init().await;
+
+    // use std::{thread, time};
+    //
+    // let ten_millis = time::Duration::from_secs(10);
+    // let _now = time::Instant::now();
+    //
+    // thread::sleep(ten_millis);
+    //
+    // let zones = driver.zones();
+    // for zone in zones {
+    //     println!("\t{:?}", &zone)
+    // }
+
+    let data = Data::new(Mutex::new(driver));
 
     // let players = api.get_players().await?;
     // println!("Got my player: {:?}", &players);

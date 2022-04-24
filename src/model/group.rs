@@ -24,6 +24,24 @@ pub struct GroupInfo {
     pub players: Vec<GroupMember>,
 }
 
+pub struct GroupMembers {
+    pub leader: GroupMember,
+    pub members: Vec<GroupMember>,
+}
+
+impl Into<GroupMembers> for GroupInfo {
+    fn into(self) -> GroupMembers {
+        let (leader, members): (Vec<GroupMember>, Vec<GroupMember>) = self
+            .players
+            .into_iter()
+            .partition(|m| m.role == GroupRole::Leader);
+        GroupMembers {
+            leader: leader.into_iter().next().expect("no leader in group"),
+            members,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SetGroupResponse {
     pub group_name: String,
@@ -31,14 +49,16 @@ pub struct SetGroupResponse {
     pub players: Vec<PlayerId>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GroupVolume {
+    #[serde(rename = "gid")]
     pub group_id: GroupId,
     pub level: Level,
 }
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct GroupMute {
+    #[serde(rename = "gid")]
     pub group_id: GroupId,
     pub state: OnOrOff,
 }

@@ -1,6 +1,6 @@
-use std::io::Cursor;
-use std::sync::mpsc::{Receiver, Sender};
 use async_stream::try_stream;
+
+use std::io::Cursor;
 
 use bytes::{Buf, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
@@ -10,11 +10,46 @@ use tracing::{debug, warn};
 
 pub use frame::*;
 
-use crate::{HeosError, HeosResult};
 use crate::model::event::HeosEvent;
+
+use crate::{HeosError, HeosResult};
 
 mod discover;
 mod frame;
+
+//
+// pub struct HeosCommand<R> {
+//     payload: String,
+//     phantom: PhantomData<R>
+// }
+// impl<R> HeosCommand<R> {
+//     pub fn create<A : std::fmt::Display>(payload: A) -> HeosCommand<R> {
+//         HeosCommand{
+//             payload: format!("{}", payload),
+//             phantom: PhantomData
+//         }
+//     }
+//
+//     pub fn register_for_change_events() -> HeosCommand<()> {
+//         HeosCommand::create("system/register_for_change_events")
+//     }
+//
+//     pub fn check_account() -> HeosCommand<AccountState> {
+//         HeosCommand::create("system/check_account")
+//     }
+//
+//     pub fn sign_in(user_name: &str, password: &str) -> HeosCommand<AccountState> {
+//         HeosCommand::create(format!("system/sign_in?un={name}&pw={password}", name=user_name, password=password))
+//     }
+//     pub fn get_players() -> HeosCommand<Vec<PlayerInfo>> {
+//         HeosCommand::create("player/get_players")
+//     }
+// }
+//
+// trait HeosCommand {
+//     type ResponseType;
+//     fn get_command(&self) -> &String;
+// }
 
 // copied pasted from https://docs.rs/crate/mini-redis/0.4.1/source/src/connection.rs
 #[derive(Debug)]
@@ -60,12 +95,11 @@ impl Connection {
         Ok(Connection::new(stream))
     }
 
-    pub fn into_event_streamm(mut self) -> impl Stream<Item=HeosResult<HeosEvent>> {
-        println!("!!!!!!!\n\n\n\n\n!!!!!!!\n\n\n\n");
+    pub fn into_event_streamm(mut self) -> impl Stream<Item = HeosResult<HeosEvent>> {
         try_stream! {
             let _ = self.write_frame("system/register_for_change_events?enable=on")
                 .await?;
-            let response = self.read_command_response().await?;
+            let _response = self.read_command_response().await?;
             println!("Listening for events....");
             loop {
                 let event : HeosEvent = self
@@ -211,4 +245,3 @@ impl Connection {
         }
     }
 }
-

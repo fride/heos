@@ -4,12 +4,12 @@ use qs;
 use regex::Regex;
 
 use crate::connection::{CommandResponse, EventResponse};
-use crate::model::*;
 use crate::model::browse::*;
 use crate::model::event::*;
-use crate::model::group::GroupInfo;
+use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::*;
 use crate::model::system::*;
+use crate::model::*;
 
 impl TryFrom<CommandResponse> for Vec<PlayerInfo> {
     type Error = crate::HeosError;
@@ -76,6 +76,39 @@ impl TryFrom<CommandResponse> for Vec<GroupInfo> {
         Ok(groups)
     }
 }
+impl TryFrom<CommandResponse> for PlayerMute {
+    type Error = crate::HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let mute: PlayerMute = qs::from_str(&value.message)?;
+        Ok(mute)
+    }
+}
+impl TryFrom<CommandResponse> for PlayerPlayMode {
+    type Error = crate::HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let mute: PlayerPlayMode = qs::from_str(&value.message)?;
+        Ok(mute)
+    }
+}
+impl TryFrom<CommandResponse> for Vec<QueueEntry> {
+    type Error = crate::HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let mute: Vec<QueueEntry> = serde_json::from_value(value.payload)?;
+        Ok(mute)
+    }
+}
+impl TryFrom<CommandResponse> for GroupVolume {
+    type Error = crate::HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let mute: GroupVolume = qs::from_str(&value.message)?;
+        Ok(mute)
+    }
+}
+
 impl TryFrom<CommandResponse> for PlayerNowPlayingMedia {
     type Error = crate::HeosError;
 
