@@ -237,6 +237,7 @@ impl Connection {
             //
             // We do not want to return `Err` from here as this "error" is an
             // expected runtime condition.
+            #[warn(non_snake_case)]
             Err(_Incomplete) => Ok(None),
             // An error was encountered while parsing the frame. The components.connection
             // is now in an invalid state. Returning `Err` from here will result

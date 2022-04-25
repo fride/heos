@@ -1,7 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use druid::lens;
-
 pub type State<T> = Arc<Mutex<T>>;
 
 // from "Hands on functional programming with rust" - Andre Johnson (page 192)
@@ -12,7 +10,8 @@ pub struct ReactiveUnit<St, A, B> {
 
 impl<St: 'static, A: 'static, B: 'static> ReactiveUnit<St, A, B> {
     pub fn new<F>(state: St, f: F) -> Self
-        where F: 'static + Fn(&mut St, A) -> B
+    where
+        F: 'static + Fn(&mut St, A) -> B,
     {
         Self {
             state: Arc::new(Mutex::new(state)),
@@ -21,7 +20,8 @@ impl<St: 'static, A: 'static, B: 'static> ReactiveUnit<St, A, B> {
     }
 
     pub fn bind<G, C>(&self, g: G) -> ReactiveUnit<St, A, C>
-        where G: Fn(&mut St, B) -> C + 'static
+    where
+        G: Fn(&mut St, B) -> C + 'static,
     {
         let ev = self.event_handler.clone();
         ReactiveUnit {
@@ -34,8 +34,10 @@ impl<St: 'static, A: 'static, B: 'static> ReactiveUnit<St, A, B> {
         }
     }
     // concat two reactive units. Use case!?
-    pub fn plus<St2: 'static, C: 'static>(&self, other: ReactiveUnit<St2, B, C>) -> ReactiveUnit<(State<St>, State<St2>), A, C>
-    {
+    pub fn plus<St2: 'static, C: 'static>(
+        &self,
+        other: ReactiveUnit<St2, B, C>,
+    ) -> ReactiveUnit<(State<St>, State<St2>), A, C> {
         let ev1 = self.event_handler.clone();
         let ev2 = other.event_handler.clone();
         let state1 = self.state.clone();
@@ -60,16 +62,14 @@ impl<St: 'static, A: 'static, B: 'static> ReactiveUnit<St, A, B> {
 
 #[cfg(test)]
 mod tests {
-    use druid::lens;
-    use tracing::event;
 
-    use crate::driver::ApiCommand;
     use crate::driver::state::DriverState;
+    use crate::driver::ApiCommand;
     use crate::model::event::HeosEvent;
+    use crate::model::player::PlayerInfo;
+    use crate::model::zone::Player;
     use crate::model::Level;
     use crate::model::OnOrOff::Off;
-    use crate::model::player::PlayerInfo;
-    use crate::Player;
 
     use super::*;
 
@@ -106,14 +106,18 @@ mod tests {
                 HeosEvent::GroupChanged => {
                     vec![ApiCommand::GetGroups]
                 }
-                HeosEvent::PlayerVolumeChanged { player_id, level, mute } => {
+                HeosEvent::PlayerVolumeChanged {
+                    player_id,
+                    level,
+                    mute,
+                } => {
                     driver_state.update_player(player_id, move |player| {
                         player.volume = Some(level);
                         player.mute = Some(mute);
                     });
                     vec![]
                 }
-                _ => vec![]
+                _ => vec![],
             }
         }
         let mut driver_state = DriverState::default();
@@ -121,7 +125,14 @@ mod tests {
         let event_handler = ReactiveUnit::new(driver_state, handle_event);
         let mut commands = vec![];
         commands.extend(event_handler.apply(HeosEvent::PlayersChanged));
-        commands.extend(event_handler.apply(HeosEvent::PlayerVolumeChanged { player_id: 1128532863, mute: Off, level: 23 }));
-        assert_eq!(commands, vec![ApiCommand::GetPlayers, ApiCommand::GetGroups])
+        commands.extend(event_handler.apply(HeosEvent::PlayerVolumeChanged {
+            player_id: 1128532863,
+            mute: Off,
+            level: 23,
+        }));
+        assert_eq!(
+            commands,
+            vec![ApiCommand::GetPlayers, ApiCommand::GetGroups]
+        )
     }
 }

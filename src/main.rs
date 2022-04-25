@@ -1,16 +1,16 @@
 #[macro_use]
 extern crate serde_derive;
 
-use std::sync::Mutex;
 use actix_files as fs;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use std::sync::Mutex;
 
 use pretty_env_logger::env_logger;
 
-use rusty_heos::{HeosDriver, HeosResult};
 use askama::Template;
+use rusty_heos::{HeosDriver, HeosResult};
 mod ui;
 
 mod templates;
@@ -27,9 +27,7 @@ async fn index(data: Data<Mutex<HeosDriver>>) -> String {
 async fn zones_route(data: Data<Mutex<HeosDriver>>) -> actix_web::Result<HttpResponse> {
     let data = data.lock().unwrap();
     let zones = data.zones();
-    let template = templates::ZonesTemplate {
-        zones
-    };
+    let template = templates::ZonesTemplate { zones };
     println!("Zones!!!");
     let s = template.render().unwrap();
     Ok(HttpResponse::Ok().content_type("text/html").body(s))
@@ -52,7 +50,8 @@ async fn main() -> crate::HeosResult<()> {
     driver.init().await;
 
     let data = Data::new(Mutex::new(driver));
-    HttpServer::new(move || {
+    // we don't care about this right now ;)
+    let _ = HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             // .data_factory(||{
@@ -61,9 +60,11 @@ async fn main() -> crate::HeosResult<()> {
             .service(index)
             .service(echo)
             .service(zones_route)
-            .service(fs::Files::new("/static", "static")
-                         .show_files_listing()
-                         .use_last_modified(true),)
+            .service(
+                fs::Files::new("/static", "static")
+                    .show_files_listing()
+                    .use_last_modified(true),
+            )
             .wrap(Logger::new("%a %{User-Agent}i"))
             .route("/hey", web::get().to(manual_hello))
     })

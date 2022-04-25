@@ -1,13 +1,7 @@
-use im::Vector;
-use crate::{Connection, HeosError};
-use crate::driver::{ApiResults, Shared};
 use crate::driver::state::DriverState;
-use crate::model::group::{GroupInfo, GroupVolume};
-use crate::model::player::PlayerInfo;
-use crate::model::{GroupId, PlayerId};
-use crate::api::HeosApi;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::{Receiver, Sender};
+use crate::driver::{ApiResults, Shared};
+use crate::model::group::GroupVolume;
+use tokio::sync::mpsc::Receiver;
 
 pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<ApiResults>) {
     tokio::spawn(async move {
@@ -46,9 +40,9 @@ fn handle_result(state: &Shared<DriverState>, result: ApiResults) {
                 player.now_playing = Some(player_now_playing.media.clone());
             })
         }
-        ApiResults::GroupVolumeChanged(group_id, level, mute) => {
+        ApiResults::GroupVolumeChanged(group_id, level, _mute) => {
             let mut state = state.lock().unwrap();
-            state.set_group_volume(GroupVolume { group_id, level});
+            state.set_group_volume(GroupVolume { group_id, level });
         }
         ApiResults::PlayerVolumeChanged(player_id, level, mute) => {
             let mut state = state.lock().unwrap();

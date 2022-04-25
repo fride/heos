@@ -1,24 +1,16 @@
 pub mod state;
-
-use im::Vector;
-use std::sync::{Arc, Mutex};
-use log::error;
-use serde::Serialize;
-
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio_stream::StreamExt;
-
 use crate::connection::Connection;
 use crate::driver::state::DriverState;
-use crate::model::event::HeosEvent;
+use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
+
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::{PlayState, PlayerInfo, PlayerNowPlayingMedia, PlayerVolume};
 use crate::model::{GroupId, Level, OnOrOff, PlayerId, Repeat};
 use crate::{HeosError, HeosResult};
 
-use crate::api::HeosApi;
-pub use state::{Player, Zone};
+use crate::model::zone::Zone;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ApiCommand {
@@ -30,6 +22,7 @@ pub enum ApiCommand {
     LoadNowPLaying(PlayerId),
 }
 
+#[derive(Debug)]
 pub enum ApiResults {
     Players(Vec<PlayerInfo>),
     Groups(Vec<GroupInfo>),
@@ -69,7 +62,11 @@ async fn setup(mut connection: Connection) -> HeosResult<HeosDriver> {
     let (result_send, result_rec) = mpsc::channel::<ApiResults>(12);
 
     command_handler::create_command_handler(connection, command_rec, result_send.clone());
-    event_hander::create_event_handler(event_connection, command_send.clone(), result_send.clone());
+    event_handler::create_event_handler(
+        event_connection,
+        command_send.clone(),
+        result_send.clone(),
+    );
     state_handler::create_state_handler(state.clone(), result_rec);
 
     println!("All done");
@@ -78,7 +75,6 @@ async fn setup(mut connection: Connection) -> HeosResult<HeosDriver> {
 
 mod state_handler;
 
-
 mod command_handler;
 
-mod event_hander;
+mod event_handler;

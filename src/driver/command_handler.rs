@@ -1,12 +1,12 @@
-use im::Vector;
-use tokio::sync::mpsc::{Sender, Receiver};
-use crate::{Connection, HeosError};
-use crate::driver::{ApiCommand, ApiResults, Shared};
-use crate::driver::state::DriverState;
-use crate::model::group::{GroupInfo, GroupVolume};
+use crate::api::HeosApi;
+
+use crate::driver::{ApiCommand, ApiResults};
+use crate::model::group::GroupInfo;
 use crate::model::player::PlayerInfo;
 use crate::model::{GroupId, PlayerId};
-use crate::api::HeosApi;
+use crate::{Connection, HeosError};
+use im::Vector;
+use tokio::sync::mpsc::{Receiver, Sender};
 
 pub fn create_command_handler(
     mut connection: Connection,
@@ -22,7 +22,6 @@ pub fn create_command_handler(
         }
     });
 }
-
 
 async fn handle_command(
     command: ApiCommand,
@@ -55,12 +54,18 @@ async fn handle_command(
     match response {
         Ok(responses) => {
             for response in responses {
-                results.send(response).await;
+                results
+                    .send(response)
+                    .await
+                    .expect("Failed to send api response");
             }
         }
         Err(err) => {
             println!("Command failed! {:?}", &err);
-            results.send(ApiResults::Error(err)).await;
+            results
+                .send(ApiResults::Error(err))
+                .await
+                .expect("failed to send error response");
         }
     }
 }

@@ -15,9 +15,10 @@ mod driver;
 mod error;
 pub mod model;
 use crate::connection::Connection;
-pub use driver::{HeosDriver, Player, Zone};
+pub use crate::driver::HeosDriver;
 
 pub mod reactive;
+pub mod v2;
 pub type HeosResult<T> = Result<T, HeosError>;
 
 pub async fn connect<A>(ip: Option<A>) -> HeosResult<Connection>

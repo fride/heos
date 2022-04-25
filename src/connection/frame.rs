@@ -83,11 +83,6 @@ fn get_line<'a>(src: &mut Cursor<&'a [u8]>) -> Result<&'a [u8], Incomplete> {
 mod parsers {
     use super::*;
 
-    pub enum HeosResponse {
-        Command(CommandResult),
-        Event(EventResponse),
-    }
-
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub enum HeosResultState {
         #[serde(rename = "success")]
@@ -145,7 +140,7 @@ mod parsers {
                 payload: response.payload,
                 options: response.options,
             })),
-            _ => Err(format!("failed to parse response {:?}", &response).into()),
+            // _ => Err(format!("failed to parse response {:?}", &response).into()),
         }
     }
 
