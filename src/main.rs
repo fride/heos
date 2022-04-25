@@ -2,7 +2,7 @@
 extern crate serde_derive;
 
 use std::sync::Mutex;
-
+use actix_files as fs;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
@@ -10,8 +10,10 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use pretty_env_logger::env_logger;
 
 use rusty_heos::{HeosDriver, HeosResult};
-
+use askama::Template;
 mod ui;
+
+mod templates;
 
 #[get("/")]
 async fn index(data: Data<Mutex<HeosDriver>>) -> String {
@@ -19,6 +21,18 @@ async fn index(data: Data<Mutex<HeosDriver>>) -> String {
     let zones = data.zones();
     let str = serde_json::to_string_pretty(&zones).unwrap();
     format!("{}", str)
+}
+
+#[get("/zones")]
+async fn zones_route(data: Data<Mutex<HeosDriver>>) -> actix_web::Result<HttpResponse> {
+    let data = data.lock().unwrap();
+    let zones = data.zones();
+    let template = templates::ZonesTemplate {
+        zones
+    };
+    println!("Zones!!!");
+    let s = template.render().unwrap();
+    Ok(HttpResponse::Ok().content_type("text/html").body(s))
 }
 
 #[post("/echo")]
@@ -37,31 +51,7 @@ async fn main() -> crate::HeosResult<()> {
     let driver = rusty_heos::create_driver(connection).await?;
     driver.init().await;
 
-    // use std::{thread, time};
-    //
-    // let ten_millis = time::Duration::from_secs(10);
-    // let _now = time::Instant::now();
-    //
-    // thread::sleep(ten_millis);
-    //
-    // let zones = driver.zones();
-    // for zone in zones {
-    //     println!("\t{:?}", &zone)
-    // }
-
     let data = Data::new(Mutex::new(driver));
-
-    // let players = api.get_players().await?;
-    // println!("Got my player: {:?}", &players);
-    // for player in &players {
-    //     let res = api.get_play_state(player.pid.clone()).await.expect("BUMS!");
-    //     println!("{:?}", res);
-    //
-    //     let (mut r, cmd) = ApiCommand::get_player_volume(player.pid.clone());
-    //     api.execute_command(cmd).await;
-    //     let res2 = r.await.unwrap();
-    //     println!("{:?}", res2);
-    // }
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
@@ -70,6 +60,10 @@ async fn main() -> crate::HeosResult<()> {
             // })
             .service(index)
             .service(echo)
+            .service(zones_route)
+            .service(fs::Files::new("/static", "static")
+                         .show_files_listing()
+                         .use_last_modified(true),)
             .wrap(Logger::new("%a %{User-Agent}i"))
             .route("/hey", web::get().to(manual_hello))
     })

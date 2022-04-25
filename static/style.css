@@ -1,0 +1,14 @@
+/* Large */
+.zones-overview {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.zones-overview div {
+
+}
+.zones-overview div h2{
+    background-color: beige;
+}

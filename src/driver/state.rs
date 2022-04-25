@@ -1,10 +1,13 @@
 use std::collections::BTreeMap;
+use std::fmt::Display;
 
 use std::ops::Index;
+use chrono::{DateTime, Utc};
 
 use itertools::Itertools;
+use log::error;
 
-use crate::model::group::{GroupInfo, GroupMember, GroupMembers, GroupRole};
+use crate::model::group::{GroupInfo, GroupMember, GroupMembers, GroupRole, GroupVolume};
 use crate::model::player::{NowPlayingMedia, PlayState, PlayerInfo, PlayerVolume};
 use crate::model::{Level, OnOrOff, PlayerId, Repeat};
 
@@ -27,6 +30,7 @@ pub struct Player {
     pub state: Option<PlayState>,
     pub repeat: Option<Repeat>,
     pub mute: Option<OnOrOff>,
+    //pub last_seen: Option<DateTime<Utc>>
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,12 +41,21 @@ pub enum Zone {
         zone_name: String,
         zone_volume: Option<Level>,
         members: Vec<Player>,
+        //last_seen: Option<DateTime<Utc>> // o
     },
 }
 
 impl Zone {
     fn single_player<P: Into<Player>>(player: P) -> Self {
         Zone::SinglePlayer(player.into())
+    }
+    fn set_volume(&mut self, level: Level) {
+        match self {
+            Zone::PlayerGroup {zone_volume,..}=> {
+                *zone_volume = Some(level);
+            },
+            _ => {}
+        }
     }
     fn group(leader: Player, members: Vec<Player>) -> Self {
         let zone_name = Zone::zone_name(&leader, &members);
@@ -51,6 +64,24 @@ impl Zone {
             zone_name,
             zone_volume: None,
             members,
+        }
+    }
+    pub fn name(&self) -> String {
+        match self {
+            Zone::SinglePlayer(leader) => leader.name.clone(),
+            Zone::PlayerGroup {zone_name, ..} => zone_name.clone()
+        }
+    }
+    pub fn volume(&self) -> Option<Level> {
+        match self {
+            Zone::SinglePlayer(leader) => leader.volume.clone(),
+            Zone::PlayerGroup { zone_volume, .. } => zone_volume.clone()
+        }
+    }
+    pub fn now_playing_media(&self) -> Option<NowPlayingMedia> {
+        match self {
+            Zone::SinglePlayer(leader) => leader.now_playing.clone(),
+            Zone::PlayerGroup { leader, .. } => leader.now_playing.clone()
         }
     }
 
@@ -192,6 +223,7 @@ impl Into<Vec<Player>> for Zone {
 pub struct DriverState {
     zones: BTreeMap<PlayerId, Zone>,
     player_to_zone: BTreeMap<PlayerId, PlayerId>,
+    last_error: Option<String>
 }
 
 impl DriverState {
@@ -219,6 +251,10 @@ impl DriverState {
             self.zones.insert(pid, Zone::SinglePlayer(player));
         }
         self.set_player_to_zone();
+    }
+
+    pub fn set_error<A : Display>(&mut self, error:A) {
+        self.last_error = Some(format!("{}",error));
     }
 
     pub fn set_players(&mut self, players: Vec<PlayerInfo>) {
@@ -249,7 +285,12 @@ impl DriverState {
         }
         self.set_player_to_zone();
     }
-    //TODO I don't get the mute handler!?
+    pub fn set_group_volume(&mut self, group_volume: GroupVolume) {
+        if let Some(zone) = self.zones.get_mut(&group_volume.group_id) {
+            zone.set_volume(group_volume.level);
+        }
+    }
+
     pub fn update_player<A>(&mut self, player_id: PlayerId, mut handler: A)
     where
         A: FnMut(&mut Player) -> (),

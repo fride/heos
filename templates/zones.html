@@ -1,0 +1,40 @@
+<html>
+<head>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<div class="zones-overview">
+    <h1>Zones</h1>
+    {% for zone in zones %}
+    <div class="zone">
+        <h2><a href="zones/{{zone.id()}}">{{ zone.name() }}<a></h2>
+        <dl>
+            <dt>Volume</dt>
+            <dd>
+                {% match zone.volume() %}
+                {% when Some with (level) %}
+                {{ level.to_string() }}
+                {% when None %}
+                -
+                {% endmatch %}
+            </dd>
+            <dt>Now Playing</dt>
+            <dd>
+                {% match zone.now_playing_media() %}
+                {% when Some with (media) %}
+                <ul>
+                    <li>{{ media.artist }}</li>
+                    <li>{{ media.mid }}</li>
+                    <li>{{ media.album_id }}</li>
+                    <li><img src="{{media.image_url}}"></li>
+                </ul>
+                {% when None %}
+                -
+                {% endmatch %}
+            </dd>
+        </dl>
+    </div>
+    {% endfor %}
+</div>
+<body>
+</html>
