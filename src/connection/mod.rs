@@ -95,7 +95,7 @@ impl Connection {
         Ok(Connection::new(stream))
     }
 
-    pub fn into_event_streamm(mut self) -> impl Stream<Item = HeosResult<HeosEvent>> {
+    pub fn into_event_stream(mut self) -> impl Stream<Item = HeosResult<HeosEvent>> {
         try_stream! {
             let _ = self.write_frame("system/register_for_change_events?enable=on")
                 .await?;

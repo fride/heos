@@ -89,7 +89,6 @@ mod tests {
             player.volume = Some(volume);
             player.clone()
         }
-
         let unit1 = ReactiveUnit::new(Player::default(), set_volume);
 
         let res = unit1.apply(12);

@@ -18,9 +18,12 @@ use crate::connection::Connection;
 pub use crate::driver::HeosDriver;
 
 pub mod reactive;
-pub mod v2;
 pub type HeosResult<T> = Result<T, HeosError>;
 
+pub mod command;
+mod spielwiese;
+
+// todo this is not nice.
 pub async fn connect<A>(ip: Option<A>) -> HeosResult<Connection>
 where
     A: ToSocketAddrs,
@@ -30,7 +33,6 @@ where
         None => connection::Connection::find().await,
     }
 }
-
 pub async fn create_driver(connection: Connection) -> HeosResult<HeosDriver> {
     HeosDriver::new(connection).await
 }

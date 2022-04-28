@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use qs;
 use regex::Regex;
+use serde_json::Value;
 
 use crate::connection::{CommandResponse, EventResponse};
 use crate::model::browse::*;
@@ -10,6 +11,7 @@ use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::*;
 use crate::model::system::*;
 use crate::model::*;
+use crate::model::zone::NowPlaying;
 
 impl TryFrom<CommandResponse> for Vec<PlayerInfo> {
     type Error = crate::HeosError;
@@ -109,18 +111,23 @@ impl TryFrom<CommandResponse> for GroupVolume {
     }
 }
 
-impl TryFrom<CommandResponse> for PlayerNowPlayingMedia {
+impl TryFrom<CommandResponse> for NowPlaying {
     type Error = crate::HeosError;
 
     fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
-        let media: NowPlayingMedia = serde_json::from_value(value.payload)?;
-        let params: EventQueryParams = qs::from_str(value.message.as_str())?;
-        Ok(PlayerNowPlayingMedia {
-            player_id: params.pid.unwrap(),
-            media: media,
-        })
+        // let params: EventQueryParams = qs::from_str(value.message.as_str())?;
+        match &value.payload {
+            Value::Object(keys) if keys.is_empty() => {
+                Ok(NowPlaying::Nothing)
+            },
+            _ => {
+                let media : NowPlayingMedia = serde_json::from_value(value.payload)?;
+                Ok(media.into())
+            }
+        }
     }
 }
+
 impl TryFrom<CommandResponse> for PlayerPlayState {
     type Error = crate::HeosError;
 
@@ -133,9 +140,7 @@ impl TryFrom<CommandResponse> for PlayerPlayState {
 // events
 fn response_to_event(response: EventResponse) -> crate::HeosResult<HeosEvent> {
     use anyhow::Context;
-
     let json = qs_to_json(&response.event_name, &response.message)?;
-    println!("{:?}", json.to_string());
     let event: HeosEvent = serde_json::from_value(json).with_context(|| {
         format!(
             "failed to handle event `{}`, qs: `{}`",

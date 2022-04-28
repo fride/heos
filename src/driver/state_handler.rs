@@ -1,9 +1,11 @@
 use crate::driver::state::DriverState;
-use crate::driver::{ApiResults, Shared};
+use crate::driver::{StateUpdates, Shared};
 use crate::model::group::GroupVolume;
 use tokio::sync::mpsc::Receiver;
+use crate::model::player::NowPlayingProgress;
+use crate::model::zone::PlayingProgress;
 
-pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<ApiResults>) {
+pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<StateUpdates>) {
     tokio::spawn(async move {
         // TODO add timestamps and waiting indeicators. ;)
         while let Some(result) = results.recv().await {
@@ -12,59 +14,67 @@ pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<Ap
     });
 }
 
-fn handle_result(state: &Shared<DriverState>, result: ApiResults) {
+fn handle_result(state: &Shared<DriverState>, result: StateUpdates) {
     match result {
-        ApiResults::Players(players) => {
+        StateUpdates::Players(players) => {
             let mut state = state.lock().unwrap();
             state.set_players(players);
         }
-        ApiResults::Groups(groups) => {
+        StateUpdates::Groups(groups) => {
             let mut state = state.lock().unwrap();
             state.set_groups(groups);
         }
-        ApiResults::PlayerVolumes(player_volume) => {
-            println!("Set Player volume");
+        StateUpdates::PlayerVolumes(player_volume) => {
             let mut state = state.lock().unwrap();
             state.update_player(player_volume.player_id.clone(), move |player| {
                 player.volume = Some(player_volume.level.clone());
             })
         }
-        ApiResults::GroupVolumes(group_volume) => {
+        StateUpdates::GroupVolumes(group_volume) => {
             let mut state = state.lock().unwrap();
             state.set_group_volume(group_volume);
         }
-        ApiResults::PlayerNowPlaying(player_now_playing) => {
+        StateUpdates::PlayerNowPlaying(player_id, player_now_playing) => {
             println!("Setting now playin");
             let mut state = state.lock().unwrap();
-            state.update_player(player_now_playing.player_id.clone(), move |player| {
-                player.now_playing = Some(player_now_playing.media.clone());
+            state.update_player(player_id.clone(), move |player| {
+                player.now_playing = player_now_playing.clone()
             })
         }
-        ApiResults::GroupVolumeChanged(group_id, level, _mute) => {
+        StateUpdates::GroupVolumeChanged(group_id, level, _mute) => {
             let mut state = state.lock().unwrap();
             state.set_group_volume(GroupVolume { group_id, level });
         }
-        ApiResults::PlayerVolumeChanged(player_id, level, mute) => {
+        StateUpdates::PlayerVolumeChanged(player_id, level, mute) => {
             let mut state = state.lock().unwrap();
             state.update_player(player_id.clone(), move |player| {
                 player.volume = Some(level.clone());
                 player.mute = Some(mute.clone());
             })
         }
-        ApiResults::PlayerPlayStateChanged(player_id, play_state) => {
+        StateUpdates::PlayerPlayStateChanged(player_id, play_state) => {
             let mut state = state.lock().unwrap();
             state.update_player(player_id.clone(), move |player| {
                 player.state = Some(play_state);
             })
         }
-        ApiResults::Error(error) => {
+        StateUpdates::Error(error) => {
             let mut state = state.lock().unwrap();
             state.set_error(error);
         }
-        ApiResults::PlayerRepeatModeChanged(player_d, repeat_mode) => {
+        StateUpdates::PlayerRepeatModeChanged(player_d, repeat_mode) => {
             let mut state = state.lock().unwrap();
             state.update_player(player_d, move |player| {
                 player.repeat = Some(repeat_mode.clone());
+            });
+        }
+        StateUpdates::PlayerNowPlayingProgress { player_id, cur_pos, duration } => {
+            let mut state = state.lock().unwrap();
+            state.update_player(player_id, move |player| {
+                player.progress = Some(PlayingProgress{
+                    cur_pos: cur_pos.clone(),
+                    duration: duration.clone()
+                });
             });
         }
     }

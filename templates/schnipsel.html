@@ -1,0 +1,109 @@
+<html>
+<head>
+    <link rel="stylesheet" href="../static/style.css">
+    <script>
+        // const myTimeout = setTimeout(function(){
+        //     location.reload();
+        // }, 5000);
+    </script>
+</head>
+<div class="zones-overview">
+    <h1>Zones</h1>
+    <div class="zone">
+        <div class="zone-header">
+            <div class="zone-image">
+                <img src="https://www.golem.de/2204/164506-322032-322029.jpg">
+            </div>
+            <div class="zone-infos">
+                <p class="album"><b>{{ album }}</b></p>
+                <p class="artist_and_song">{{ artist }} - {{ song }}</p>
+                <p class="progress">0:10 / 3:23</p>
+            </div>
+            <div class="zone-header-zone-name">
+                <p>Küche und co</p>
+            </div>
+        </div>
+        <div>
+            <div class="zone-member">
+                <div>Sub-Players 1</div>
+                <div class="slidecontainer">
+                    <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+                </div>
+                <div>
+                    <input type="checkbox" checked>
+                </div>
+            </div>
+            <div class="zone-member">
+                <div>Sub-Players 2</div>
+                <div class="slidecontainer">
+                    <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+                </div>
+                <div>
+                    <input type="checkbox" checked>
+                </div>
+            </div>
+        </div>
+        <div class="zone-footer">
+            <div class="slidecontainer">
+                <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+            </div>
+        </div>
+    </div>
+    <div class="zone">
+        <div class="zone-header">
+            <div class="zone-image">
+                <img src="https://www.golem.de/2204/164506-322032-322029.jpg">
+            </div>
+            <div class="now-playing">
+                <p class="album"><b>{{ album }}</b></p>
+                <p class="artist_and_song">{{ artist }} - {{ song }}</p>
+                <p class="progress">0:10 / 3:23</p>
+            </div>
+            <div name="zone-header-zone-name">
+                Küche
+            </div>
+        </div>
+        <div>
+            <div class="zone-member">
+                <div>Sub-Players 1</div>
+                <div class="slidecontainer">
+                    <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+                </div>
+                <div>
+                    <input type="checkbox" checked>
+                </div>
+            </div>
+        </div>
+        <div class="zone-footer">
+            <div class="slidecontainer">
+                <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+            </div>
+        </div>
+    </div>
+    <div class="zone">
+        <div class="zone-header">
+            <div class="zone-image">
+                <img src="https://www.golem.de/2204/164506-322032-322029.jpg">
+            </div>
+            <div class="zone-infos">
+                <p class="zone-name"><a href="zones/{{zone.id()}}">Küche</a></p>
+                <p class="station-name">station_name</p>
+                <p class="album"><b>{{ album }}</b></p>
+                <p class="artist_and_song">{{ artist }} - {{ song }}</p>
+                <p class="progress">0:10 / 3:23</p>
+            </div>
+            <div name="zone-header-zone-name">
+                Küche
+            </div>
+        </div>
+        <div>
+            <div class="zone-member">
+            </div>
+        </div>
+        <div class="zone-footer">
+            <div class="slidecontainer">
+                <input type="range" min="0" max="100" value="{{level}}" class="slider" id="myRange">
+            </div>
+        </div>
+    </div>
+</div>

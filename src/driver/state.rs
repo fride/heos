@@ -40,6 +40,14 @@ impl DriverState {
     pub fn zone_iter(&self) -> impl Iterator<Item = &Zone> {
         self.zones.values()
     }
+    pub fn players(&self) -> Vec<&Player> {
+        let mut players = vec![];
+        for zone in self.zones.values() {
+            players.extend(zone.players());
+        }
+        players
+    }
+
     pub fn find_zone(&self, player_id: PlayerId) -> Option<&Zone> {
         self.zones.get(&player_id)
     }
