@@ -1,9 +1,9 @@
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
-use crate::{Connection, HeosResult};
 use crate::driver::{ApiCommand, StateUpdates};
 use crate::model::event::HeosEvent;
+use crate::{Connection, HeosResult};
 
 fn event_to_results(event: HeosResult<HeosEvent>) -> (Vec<ApiCommand>, Vec<StateUpdates>) {
     match event {
@@ -18,17 +18,27 @@ fn event_to_results(event: HeosResult<HeosEvent>) -> (Vec<ApiCommand>, Vec<State
         Ok(HeosEvent::PlayerNowPlayingChanged { player_id }) => {
             (vec![ApiCommand::LoadNowPLaying(player_id)], vec![])
         }
-        Ok(HeosEvent::PlayerNowPlayingProgress { player_id, cur_pos, duration }) =>
-            (vec![], vec![StateUpdates::PlayerNowPlayingProgress { player_id, cur_pos, duration }]),
+        Ok(HeosEvent::PlayerNowPlayingProgress {
+            player_id,
+            cur_pos,
+            duration,
+        }) => (
+            vec![],
+            vec![StateUpdates::PlayerNowPlayingProgress {
+                player_id,
+                cur_pos,
+                duration,
+            }],
+        ),
         Ok(HeosEvent::PlayerPlaybackError {
-               player_id: _,
-               error: _,
-           }) => (vec![], vec![]),
+            player_id: _,
+            error: _,
+        }) => (vec![], vec![]),
         Ok(HeosEvent::PlayerVolumeChanged {
-               player_id,
-               level,
-               mute,
-           }) => (
+            player_id,
+            level,
+            mute,
+        }) => (
             vec![],
             vec![StateUpdates::PlayerVolumeChanged(player_id, level, mute)],
         ),

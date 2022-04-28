@@ -1,25 +1,24 @@
+use chrono::Duration;
 use std::cmp::max;
 use std::fmt::Formatter;
-use chrono::Duration;
 
+use crate::model::player::{MediaType, NowPlayingMedia, NowPlayingProgress, PlayState, PlayerInfo};
+use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
 use chrono::format::format;
 use chrono::format::Numeric::Timestamp;
-use crate::model::player::{NowPlayingMedia, PlayState, PlayerInfo, MediaType, NowPlayingProgress};
-use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayingProgress {
     pub cur_pos: Milliseconds,
-    pub duration: Option<Milliseconds>
+    pub duration: Option<Milliseconds>,
 }
 
 fn millis_to_str(millis: &Milliseconds) -> String {
-
     let duration = Duration::milliseconds(millis.clone() as i64); // overflow ;)
     let hours = duration.num_hours();
     let minutes = duration.num_minutes() % 60;
     let seconds = duration.num_seconds() % 60;
-    if hours >0 {
+    if hours > 0 {
         format!("{}:{}:{}", hours, minutes, seconds)
     } else {
         format!("{}:{}", minutes, seconds)
@@ -29,12 +28,16 @@ fn millis_to_str(millis: &Milliseconds) -> String {
 impl std::fmt::Display for PlayingProgress {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.duration {
-            None =>  write!(f,"{}", millis_to_str(&self.cur_pos)),
-            Some(duration) => write!(f,"{} / {}", millis_to_str(&self.cur_pos), millis_to_str(&duration))
+            None => write!(f, "{}", millis_to_str(&self.cur_pos)),
+            Some(duration) => write!(
+                f,
+                "{} / {}",
+                millis_to_str(&self.cur_pos),
+                millis_to_str(&duration)
+            ),
         }
     }
 }
-
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Player {
@@ -48,9 +51,7 @@ pub struct Player {
     pub mute: Option<OnOrOff>,
     //pub last_seen: Option<DateTime<Utc>>
 }
-impl Player {
-
-}
+impl Player {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Zone {
@@ -71,7 +72,7 @@ pub enum NowPlaying {
         station_name: String,
         album_id: String,
         source_id: SourceId,
-        image_url: String
+        image_url: String,
     },
     Song {
         song: String,
@@ -80,23 +81,17 @@ pub enum NowPlaying {
         image_url: String,
         mid: String,
         album_id: String,
-        source_id: SourceId
+        source_id: SourceId,
     },
 }
-const EMPTY_STRING : String = String::new();
+const EMPTY_STRING: String = String::new();
 
 impl NowPlaying {
     pub fn image_url(&self) -> String {
         match self {
-            NowPlaying::Nothing => {
-                EMPTY_STRING
-            }
-            NowPlaying::Station { image_url, .. } => {
-                image_url.clone()
-            }
-            NowPlaying::Song { image_url, .. } => {
-                image_url.clone()
-            }
+            NowPlaying::Nothing => EMPTY_STRING,
+            NowPlaying::Station { image_url, .. } => image_url.clone(),
+            NowPlaying::Song { image_url, .. } => image_url.clone(),
         }
     }
 }
@@ -122,16 +117,14 @@ impl From<NowPlayingMedia> for NowPlaying {
                 image_url: now.image_url,
                 mid: now.mid,
                 album_id: now.album_id,
-                source_id: now.sid
+                source_id: now.sid,
             },
-            MediaType::Station => {
-                NowPlaying::Station {
-                    station_name: now.station.unwrap_or("".to_owned()),
-                    album_id: now.album,
-                    source_id: now.sid,
-                    image_url: now.image_url,
-                }
-            }
+            MediaType::Station => NowPlaying::Station {
+                station_name: now.station.unwrap_or("".to_owned()),
+                album_id: now.album,
+                source_id: now.sid,
+                image_url: now.image_url,
+            },
         }
     }
 }
@@ -167,9 +160,8 @@ impl Zone {
     pub fn is_group(&self) -> bool {
         match self {
             Zone::SinglePlayer(_) => false,
-            Zone::PlayerGroup { .. } => true
+            Zone::PlayerGroup { .. } => true,
         }
-
     }
     pub fn volume(&self) -> Option<Level> {
         match self {
@@ -229,7 +221,9 @@ impl Zone {
     pub fn players(&self) -> Vec<&Player> {
         match self {
             Zone::SinglePlayer(leader) => vec![&leader],
-            Zone::PlayerGroup { leader, members, .. } => {
+            Zone::PlayerGroup {
+                leader, members, ..
+            } => {
                 let mut players = vec![leader];
                 players.extend(members);
                 players

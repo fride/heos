@@ -1,7 +1,8 @@
-use async_stream::try_stream;
-
+use std::fmt::Display;
 use std::io::Cursor;
 
+use async_stream::try_stream;
+use async_trait::async_trait;
 use bytes::{Buf, BytesMut};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::{TcpStream, ToSocketAddrs};
@@ -11,45 +12,10 @@ use tracing::{debug, warn};
 pub use frame::*;
 
 use crate::model::event::HeosEvent;
-
 use crate::{HeosError, HeosResult};
 
 mod discover;
 mod frame;
-
-//
-// pub struct HeosCommand<R> {
-//     payload: String,
-//     phantom: PhantomData<R>
-// }
-// impl<R> HeosCommand<R> {
-//     pub fn create<A : std::fmt::Display>(payload: A) -> HeosCommand<R> {
-//         HeosCommand{
-//             payload: format!("{}", payload),
-//             phantom: PhantomData
-//         }
-//     }
-//
-//     pub fn register_for_change_events() -> HeosCommand<()> {
-//         HeosCommand::create("system/register_for_change_events")
-//     }
-//
-//     pub fn check_account() -> HeosCommand<AccountState> {
-//         HeosCommand::create("system/check_account")
-//     }
-//
-//     pub fn sign_in(user_name: &str, password: &str) -> HeosCommand<AccountState> {
-//         HeosCommand::create(format!("system/sign_in?un={name}&pw={password}", name=user_name, password=password))
-//     }
-//     pub fn get_players() -> HeosCommand<Vec<PlayerInfo>> {
-//         HeosCommand::create("player/get_players")
-//     }
-// }
-//
-// trait HeosCommand {
-//     type ResponseType;
-//     fn get_command(&self) -> &String;
-// }
 
 // copied pasted from https://docs.rs/crate/mini-redis/0.4.1/source/src/connection.rs
 #[derive(Debug)]
@@ -244,5 +210,28 @@ impl Connection {
             // in the components.connection being closed.
             // Err(e) => Err(e.into()),
         }
+    }
+}
+
+#[async_trait]
+pub trait CommandExecutor {
+    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
+    where
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>;
+}
+
+#[async_trait]
+impl CommandExecutor for Connection {
+    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
+    where
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>,
+    {
+        let command = format!("{}", command);
+        tracing::debug!("executing command: {}", &command);
+        let _ = self.write_frame(&command).await?;
+        let response = self.read_command_response().await?;
+        response.try_into()
     }
 }

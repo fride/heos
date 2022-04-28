@@ -10,8 +10,8 @@ use crate::model::event::*;
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::*;
 use crate::model::system::*;
-use crate::model::*;
 use crate::model::zone::NowPlaying;
+use crate::model::*;
 
 impl TryFrom<CommandResponse> for Vec<PlayerInfo> {
     type Error = crate::HeosError;
@@ -117,11 +117,9 @@ impl TryFrom<CommandResponse> for NowPlaying {
     fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
         // let params: EventQueryParams = qs::from_str(value.message.as_str())?;
         match &value.payload {
-            Value::Object(keys) if keys.is_empty() => {
-                Ok(NowPlaying::Nothing)
-            },
+            Value::Object(keys) if keys.is_empty() => Ok(NowPlaying::Nothing),
             _ => {
-                let media : NowPlayingMedia = serde_json::from_value(value.payload)?;
+                let media: NowPlayingMedia = serde_json::from_value(value.payload)?;
                 Ok(media.into())
             }
         }

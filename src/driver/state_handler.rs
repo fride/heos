@@ -1,9 +1,9 @@
 use crate::driver::state::DriverState;
-use crate::driver::{StateUpdates, Shared};
+use crate::driver::{Shared, StateUpdates};
 use crate::model::group::GroupVolume;
-use tokio::sync::mpsc::Receiver;
 use crate::model::player::NowPlayingProgress;
 use crate::model::zone::PlayingProgress;
+use tokio::sync::mpsc::Receiver;
 
 pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<StateUpdates>) {
     tokio::spawn(async move {
@@ -68,12 +68,16 @@ fn handle_result(state: &Shared<DriverState>, result: StateUpdates) {
                 player.repeat = Some(repeat_mode.clone());
             });
         }
-        StateUpdates::PlayerNowPlayingProgress { player_id, cur_pos, duration } => {
+        StateUpdates::PlayerNowPlayingProgress {
+            player_id,
+            cur_pos,
+            duration,
+        } => {
             let mut state = state.lock().unwrap();
             state.update_player(player_id, move |player| {
-                player.progress = Some(PlayingProgress{
+                player.progress = Some(PlayingProgress {
                     cur_pos: cur_pos.clone(),
-                    duration: duration.clone()
+                    duration: duration.clone(),
                 });
             });
         }

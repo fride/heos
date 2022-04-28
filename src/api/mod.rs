@@ -2,12 +2,15 @@ use async_trait::async_trait;
 use std::fmt::Display;
 use std::sync::{Arc, LockResult, Mutex};
 
-use crate::connection::{CommandResponse, Connection};
+use crate::connection::{CommandExecutor, CommandResponse, Connection};
 use crate::model::group::{GroupInfo, GroupVolume};
-use crate::model::player::{PlayState, PlayerInfo, PlayerMute, PlayerNowPlayingMedia, PlayerPlayMode, PlayerPlayState, PlayerVolume, QueueEntry, NowPlayingMedia};
+use crate::model::player::{
+    NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerNowPlayingMedia, PlayerPlayMode,
+    PlayerPlayState, PlayerVolume, QueueEntry,
+};
+use crate::model::zone::{NowPlaying, Player};
 use crate::model::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range};
 use crate::{HeosError, HeosResult};
-use crate::model::zone::{NowPlaying, Player};
 
 mod parsers;
 
@@ -22,10 +25,7 @@ pub trait HeosApi {
         player_id: PlayerId,
         state: PlayState,
     ) -> HeosResult<PlayerPlayState>;
-    async fn get_now_playing_media(
-        &mut self,
-        player_id: PlayerId,
-    ) -> HeosResult<NowPlaying>;
+    async fn get_now_playing_media(&mut self, player_id: PlayerId) -> HeosResult<NowPlaying>;
     async fn get_volume(&mut self, player_id: PlayerId) -> HeosResult<PlayerVolume>;
     async fn set_volume(&mut self, player_id: PlayerId, level: Level) -> HeosResult<PlayerVolume>;
     async fn get_mute(&mut self, player_id: PlayerId) -> HeosResult<PlayerMute>;
@@ -48,29 +48,6 @@ pub trait HeosApi {
         group_id: GroupId,
         level: Level,
     ) -> HeosResult<GroupVolume>;
-}
-
-#[async_trait]
-trait CommandExecutor {
-    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
-    where
-        A: Display + Send,
-        B: TryFrom<CommandResponse, Error = HeosError>;
-}
-
-#[async_trait]
-impl CommandExecutor for Connection {
-    async fn execute_command<A, B>(&mut self, command: A) -> HeosResult<B>
-    where
-        A: Display + Send,
-        B: TryFrom<CommandResponse, Error = HeosError>,
-    {
-        let command = format!("{}", command);
-        tracing::debug!("executing command: {}", &command);
-        let _ = self.write_frame(&command).await?;
-        let response = self.read_command_response().await?;
-        response.try_into()
-    }
 }
 
 #[async_trait]
@@ -97,10 +74,7 @@ impl HeosApi for Connection {
     }
 
     // todo this may return nothing.
-    async fn get_now_playing_media(
-        &mut self,
-        player_id: PlayerId,
-    ) -> HeosResult<NowPlaying> {
+    async fn get_now_playing_media(&mut self, player_id: PlayerId) -> HeosResult<NowPlaying> {
         self.execute_command(format!("player/get_now_playing_media?pid={}", player_id))
             .await
     }

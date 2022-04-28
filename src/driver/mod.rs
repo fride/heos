@@ -33,9 +33,11 @@ pub enum StateUpdates {
     PlayerVolumeChanged(PlayerId, Level, OnOrOff),
     PlayerPlayStateChanged(PlayerId, PlayState),
     PlayerRepeatModeChanged(PlayerId, Repeat),
-    PlayerNowPlayingProgress{player_id: PlayerId,
-                             cur_pos: Milliseconds,
-                             duration: Option<Milliseconds>},
+    PlayerNowPlayingProgress {
+        player_id: PlayerId,
+        cur_pos: Milliseconds,
+        duration: Option<Milliseconds>,
+    },
     Error(HeosError),
 }
 
@@ -64,7 +66,7 @@ impl HeosDriver {
     }
     // returns a copy because of concurreny.
     pub fn players(&self) -> Vec<Player> {
-        let mut players= vec![];
+        let mut players = vec![];
         {
             for zone in self.zones() {
                 for player in zone.players() {

@@ -5,8 +5,8 @@ use std::path::Display;
 use askama::Template;
 use druid::Widget;
 
-use rusty_heos::model::zone::{PlayingProgress, Zone};
 use rusty_heos::model::zone::NowPlaying;
+use rusty_heos::model::zone::{PlayingProgress, Zone};
 
 #[derive(Template)]
 #[template(path = "zones.html")]
@@ -16,7 +16,7 @@ pub struct ZonesTemplate {
 }
 
 impl ZonesTemplate {
-    pub fn new<T: IntoIterator<Item=Zone>>(zones_to_use: T) -> Self {
+    pub fn new<T: IntoIterator<Item = Zone>>(zones_to_use: T) -> Self {
         let zones: Vec<Zone> = zones_to_use.into_iter().collect();
         let mut player_names = BTreeMap::new();
         for zone in &zones {
@@ -47,13 +47,11 @@ impl ZoneWidget for Zone {
     fn duration(&self) -> String {
         let progress = match self {
             Zone::SinglePlayer(ref leader) => &leader.progress,
-            Zone::PlayerGroup { ref leader, .. } => &leader.progress
+            Zone::PlayerGroup { ref leader, .. } => &leader.progress,
         };
         match progress {
             None => "".to_owned(),
-            Some(progress) => format!("{}", progress)
+            Some(progress) => format!("{}", progress),
         }
     }
 }
-
-
