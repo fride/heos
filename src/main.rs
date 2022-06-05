@@ -13,31 +13,11 @@ use std::sync::Mutex;
 use pretty_env_logger::env_logger;
 
 use askama::Template;
-use rusty_heos::command::different_structs::HeosCommandExecutor;
-use rusty_heos::command::different_structs::HeosCommands::{GetPlayerVolume, GetPlayers};
 use rusty_heos::model::player::PlayerInfo;
 use rusty_heos::model::zone::Player;
 use rusty_heos::{HeosDriver, HeosResult};
 
 mod templates;
-
-//
-// #[derive(Command)]
-// #[result="Vec<PlayerInfo>"]
-// #[command="player/get_players"]
-// pub struct GetPlayersFoo;
-
-// struct HttpGuard;
-// impl Guard for HttpGuard {
-//     fn check(&self, ctx: &GuardContext<'_>) -> bool {
-//         ctx.head()
-//             .headers()
-//             .get("Accept")
-//             .map_or(false, |hv| hv.as_bytes().contains("text/html"))
-//     }
-// }
-//
-// struct JsonGuard;
 
 #[get("/")]
 async fn index(data: Data<Mutex<HeosDriver>>) -> String {

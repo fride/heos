@@ -1,4 +1,8 @@
+mod command_handler;
+mod event_handler;
 pub mod state;
+mod state_handler;
+
 use crate::connection::Connection;
 use crate::driver::state::DriverState;
 use std::sync::{Arc, Mutex};
@@ -53,7 +57,6 @@ impl HeosDriver {
         self.0.send(ApiCommand::RefreshState).await;
     }
 
-    // returns a copy because of concurreny.
     pub fn zones(&self) -> Vec<Zone> {
         let mut all_zones = vec![];
         {
@@ -64,7 +67,7 @@ impl HeosDriver {
         }
         all_zones
     }
-    // returns a copy because of concurreny.
+
     pub fn players(&self) -> Vec<Player> {
         let mut players = vec![];
         {
@@ -79,7 +82,6 @@ impl HeosDriver {
 }
 
 async fn setup(mut connection: Connection) -> HeosResult<HeosDriver> {
-    println!("Setting up");
     let event_connection = connection.try_clone().await?;
     let state = Arc::new(Mutex::new(DriverState::default()));
 
@@ -93,13 +95,5 @@ async fn setup(mut connection: Connection) -> HeosResult<HeosDriver> {
         result_send.clone(),
     );
     state_handler::create_state_handler(state.clone(), result_rec);
-
-    println!("All done");
     Ok(HeosDriver(command_send, state))
 }
-
-mod state_handler;
-
-mod command_handler;
-
-mod event_handler;

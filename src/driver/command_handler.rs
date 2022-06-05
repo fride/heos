@@ -13,12 +13,12 @@ pub fn create_command_handler(
     mut commands: Receiver<ApiCommand>,
     results: Sender<StateUpdates>,
 ) {
-    tracing::debug!("Setting up create_command_handler");
+    tracing::info!("Setting up create_command_handler");
     tokio::spawn(async move {
-        tracing::debug!("Waiting for commands ");
         while let Some(command) = commands.recv().await {
             handle_command(command, &mut connection, &results).await;
         }
+        tracing::info!("Finished command thread.");
     });
 }
 
