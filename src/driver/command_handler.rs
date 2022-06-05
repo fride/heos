@@ -2,7 +2,7 @@ use crate::api::HeosApi;
 
 use crate::driver::{ApiCommand, StateUpdates};
 use crate::model::group::GroupInfo;
-use crate::model::player::{PlayerInfo, PlayerNowPlayingMedia};
+use crate::model::player::{PlayerInfo};
 use crate::model::{GroupId, PlayerId};
 use crate::{Connection, HeosError};
 use im::Vector;

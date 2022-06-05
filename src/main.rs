@@ -2,9 +2,9 @@
 extern crate serde_derive;
 
 use actix_files as fs;
-use actix_web::guard::{Guard, GuardContext};
-use actix_web::http::header;
-use actix_web::http::header::HeaderValue;
+
+
+
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
@@ -13,8 +13,8 @@ use std::sync::Mutex;
 use pretty_env_logger::env_logger;
 
 use askama::Template;
-use rusty_heos::model::player::PlayerInfo;
-use rusty_heos::model::zone::Player;
+
+
 use rusty_heos::{HeosDriver, HeosResult};
 
 mod templates;
@@ -80,7 +80,7 @@ async fn manual_hello() -> impl Responder {
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     // let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
-    let mut connection = rusty_heos::connect::<&str>(None).await?;
+    let connection = rusty_heos::connect::<&str>(None).await?;
 
     let driver = rusty_heos::create_driver(connection).await?;
     driver.init().await;

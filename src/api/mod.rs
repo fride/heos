@@ -1,16 +1,16 @@
 use async_trait::async_trait;
-use std::fmt::Display;
-use std::sync::{Arc, LockResult, Mutex};
 
-use crate::connection::{CommandExecutor, CommandResponse, Connection};
+
+
+use crate::connection::{CommandExecutor, Connection};
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::{
-    NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerNowPlayingMedia, PlayerPlayMode,
+    PlayState, PlayerInfo, PlayerMute, PlayerPlayMode,
     PlayerPlayState, PlayerVolume, QueueEntry,
 };
-use crate::model::zone::{NowPlaying, Player};
+use crate::model::zone::{NowPlaying};
 use crate::model::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range};
-use crate::{HeosError, HeosResult};
+use crate::{HeosResult};
 
 mod parsers;
 

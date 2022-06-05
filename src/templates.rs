@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
-use std::fmt::Formatter;
-use std::path::Display;
+
+
 
 use askama::Template;
 use druid::Widget;
 
 use rusty_heos::model::zone::NowPlaying;
-use rusty_heos::model::zone::{PlayingProgress, Zone};
+use rusty_heos::model::zone::{Zone};
 
 #[derive(Template)]
 #[template(path = "zones.html")]

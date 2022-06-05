@@ -1,11 +1,11 @@
 use chrono::Duration;
-use std::cmp::max;
+
 use std::fmt::Formatter;
 
-use crate::model::player::{MediaType, NowPlayingMedia, NowPlayingProgress, PlayState, PlayerInfo};
+use crate::model::player::{MediaType, NowPlayingMedia, PlayState, PlayerInfo};
 use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
-use chrono::format::format;
-use chrono::format::Numeric::Timestamp;
+
+
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayingProgress {

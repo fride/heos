@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 
 use crate::model::group::{GroupInfo, GroupVolume};
-use crate::model::player::{PlayState, PlayerInfo, PlayerNowPlayingMedia, PlayerVolume};
+use crate::model::player::{PlayState, PlayerInfo, PlayerVolume};
 use crate::model::{GroupId, Level, Milliseconds, OnOrOff, PlayerId, Repeat};
 use crate::{HeosError, HeosResult};
 

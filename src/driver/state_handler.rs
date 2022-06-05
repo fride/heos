@@ -1,7 +1,7 @@
 use crate::driver::state::DriverState;
 use crate::driver::{Shared, StateUpdates};
 use crate::model::group::GroupVolume;
-use crate::model::player::NowPlayingProgress;
+
 use crate::model::zone::PlayingProgress;
 use tokio::sync::mpsc::Receiver;
 
