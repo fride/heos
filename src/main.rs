@@ -3,31 +3,27 @@ extern crate serde_derive;
 
 use actix_files as fs;
 
+use actix_web::http::header::HeaderMap;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
-use actix_web::http::header::HeaderMap;
 
 use pretty_env_logger::env_logger;
 
 use askama::Template;
 use tokio::time::sleep;
 
-
 use rusty_heos::{Controller, HeosDriver, HeosResult};
 
 mod templates;
 
-fn is_json(headers: & HeaderMap) -> bool
-{
-    headers
-        .get("Accept")
-        .map_or(false, |header| {
-            header.to_str().unwrap().contains("application/json")
-        })
+fn is_json(headers: &HeaderMap) -> bool {
+    headers.get("Accept").map_or(false, |header| {
+        header.to_str().unwrap().contains("application/json")
+    })
 }
 
 #[get("/")]
@@ -39,22 +35,23 @@ async fn index(data: Data<Mutex<HeosDriver>>) -> String {
 }
 
 #[get("/zones")]
-async fn zones_route(req: HttpRequest,data: Data<Mutex<HeosDriver>>) -> actix_web::Result<HttpResponse> {
+async fn zones_route(
+    req: HttpRequest,
+    data: Data<Mutex<HeosDriver>>,
+) -> actix_web::Result<HttpResponse> {
     let data = data.lock().unwrap();
     let zones = data.zones();
     if is_json(req.headers()) {
         println!("sending json");
         let json = serde_json::to_string_pretty(&zones).unwrap();
-        Ok(
-            HttpResponse::Ok()
-                .content_type("application/json")
-                .body(json))
+        Ok(HttpResponse::Ok()
+            .content_type("application/json")
+            .body(json))
     } else {
         let template = templates::ZonesTemplate::new(zones);
         let s = template.render().unwrap();
         Ok(HttpResponse::Ok().content_type("text/html").body(s))
     }
-
 }
 
 #[get("/players")]

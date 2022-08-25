@@ -6,7 +6,7 @@ use ssdp::message::{Config, Multicast, SearchRequest, SearchResponse};
 use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use tokio::runtime;
 use tokio::sync::mpsc;
-use tracing::{debug};
+use tracing::debug;
 
 // todo this would make the entire app async. Don't know if I need it.
 pub fn device_channel() -> mpsc::Receiver<IpAddr> {

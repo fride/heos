@@ -1,15 +1,15 @@
+use crate::contoller::Volume;
+use crate::model::browse::MusicSource;
+use crate::model::player::*;
+use crate::model::zone::NowPlaying;
+use crate::model::PlayerId;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use tokio::sync::watch;
-use crate::contoller::Volume;
-use crate::model::browse::MusicSource;
-use crate::model::PlayerId;
-use crate::model::player::*;
-use crate::model::zone::NowPlaying;
 
 type Shared<T> = Arc<Mutex<T>>;
 
-#[derive(Debug,Clone,Default)]
+#[derive(Debug, Clone, Default)]
 pub struct State {
     user: Shared<Option<String>>,
     players: Shared<BTreeMap<PlayerId, PlayerInfo>>,
@@ -20,8 +20,7 @@ pub struct State {
 }
 
 impl State {
-
-    pub fn set_music_sources<M : IntoIterator<Item = MusicSource>>(&self, sources: M){
+    pub fn set_music_sources<M: IntoIterator<Item = MusicSource>>(&self, sources: M) {
         let mut state = self.music_sources.lock().unwrap();
         state.clear();
         for source in sources {

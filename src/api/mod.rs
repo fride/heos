@@ -1,17 +1,16 @@
 use async_trait::async_trait;
 use tokio_stream::Stream;
 
-use crate::HeosResult;
 use crate::connection::{CommandExecutor, Connection};
-use crate::model::{GroupId, Level, OnOrOff, PlayerId, PlayMode, Range};
 use crate::model::browse::MusicSource;
 use crate::model::event::HeosEvent;
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::{
-    PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState,
-    PlayerVolume, PlayState, QueueEntry,
+    PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState, PlayerVolume, QueueEntry,
 };
 use crate::model::zone::NowPlaying;
+use crate::model::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range};
+use crate::HeosResult;
 
 mod parsers;
 
@@ -37,7 +36,8 @@ pub trait HeosApi {
         player_id: PlayerId,
         mode: PlayMode,
     ) -> HeosResult<PlayerPlayMode>;
-    async fn get_queue(&mut self, player_id: PlayerId, range: Range) -> HeosResult<Vec<QueueEntry>>;
+    async fn get_queue(&mut self, player_id: PlayerId, range: Range)
+        -> HeosResult<Vec<QueueEntry>>;
     async fn get_groups(&mut self) -> HeosResult<Vec<GroupInfo>>;
     async fn set_group(&mut self, players: Vec<PlayerId>) -> HeosResult<Vec<GroupInfo>>;
     async fn get_group_volume(&mut self, group_id: GroupId) -> HeosResult<GroupVolume>;
@@ -80,8 +80,7 @@ impl HeosApi for Connection {
             .await
     }
     async fn get_music_sources(&mut self) -> HeosResult<Vec<MusicSource>> {
-        self.execute_command("browse/get_music_sources")
-            .await
+        self.execute_command("browse/get_music_sources").await
     }
     async fn get_volume(&mut self, player_id: PlayerId) -> HeosResult<PlayerVolume> {
         self.execute_command(format!("player/get_volume?pid={}", player_id))
