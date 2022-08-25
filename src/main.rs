@@ -2,17 +2,17 @@
 extern crate serde_derive;
 
 use std::sync::Mutex;
-use std::thread;
-use std::time::Duration;
 
-use actix_files as fs;
-use actix_web::{App, get, HttpRequest, HttpResponse, HttpServer, post, Responder, web};
+
+
+
+use actix_web::{get, HttpRequest, HttpResponse, post, Responder};
 use actix_web::http::header::HeaderMap;
-use actix_web::middleware::Logger;
+
 use actix_web::web::Data;
 use askama::Template;
 use pretty_env_logger::env_logger;
-use tokio::time::sleep;
+
 
 use rusty_heos::{Controller, HeosDriver, HeosResult};
 

@@ -1,6 +1,6 @@
 use tokio_stream::StreamExt;
 
-use crate::{Connection, HeosResult};
+use crate::{Connection};
 use crate::contoller::command::{CommandChannel, GetPlayers};
 use crate::contoller::state::State;
 use crate::contoller::Volume;
@@ -40,11 +40,11 @@ pub async fn handle_event(event: HeosEvent, command_channel: &CommandChannel, st
                 state: play_state,
             });
         }
-        HeosEvent::PlayerNowPlayingChanged { player_id } => {}
+        HeosEvent::PlayerNowPlayingChanged { player_id: _ } => {}
         HeosEvent::PlayerNowPlayingProgress {
-            player_id,
-            cur_pos,
-            duration,
+            player_id: _,
+            cur_pos: _,
+            duration: _,
         } => {
 
             //player_progress.insert(player_id, Progress{current_position: cur_pos, duration_in_ms: duration.unwrap_or_default()});

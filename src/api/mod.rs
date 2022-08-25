@@ -1,11 +1,11 @@
 use async_trait::async_trait;
-use tokio_stream::Stream;
+
 
 use crate::connection::{CommandExecutor, Connection};
 use crate::HeosResult;
 use crate::model::{GroupId, Level, OnOrOff, PlayerId, PlayMode, Range};
 use crate::model::browse::MusicSource;
-use crate::model::event::HeosEvent;
+
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::{
     PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState, PlayerVolume, PlayState, QueueEntry,

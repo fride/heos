@@ -1,11 +1,11 @@
-use async_trait::async_trait;
+
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::oneshot;
-use tokio_stream::Stream;
-use tracing::event;
 
-use crate::{Connection, HeosError, HeosResult};
+
+
+use crate::{Connection, HeosResult};
 use crate::connection::CommandExecutor;
 use crate::model::event::HeosEvent;
 use crate::model::player::PlayerInfo;
@@ -75,7 +75,7 @@ impl CommandExecuter {
                     .await
                     .map(|c| c.into_event_stream());
                 match events {
-                    Ok(e) => {
+                    Ok(_e) => {
                         //todo this needs its own logik
                     }
                     Err(err) => {

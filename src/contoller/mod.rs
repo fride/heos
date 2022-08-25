@@ -1,28 +1,28 @@
-use std::collections::btree_map::Values;
-use std::collections::BTreeMap;
-use std::iter::Cloned;
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
 
-use chrono::Utc;
-use tokio::sync::{oneshot, watch};
-use tokio::sync::mpsc;
+
+
+
+
+
+
+use tokio::sync::{oneshot};
+
 
 use state::*;
 
 use crate::{Connection, HeosResult};
 use crate::api::HeosApi;
-use crate::connection::CommandExecutor;
+
 use crate::contoller::command::{
-    ApiCommand, CommandChannel, GetMusicSources, GetPlayers, InitController,
+    CommandChannel, InitController,
 };
-use crate::model::{Level, OnOrOff, PlayerId, QueueId};
+use crate::model::{Level, OnOrOff};
 use crate::model::browse::MusicSource;
-use crate::model::event::HeosEvent;
+
 use crate::model::player::{
-    NowPlayingMedia, PlayerInfo, PlayerPlayState, PlayerVolume, PlayState, Progress,
+    PlayerInfo,
 };
-use crate::model::zone::NowPlaying;
+
 
 #[derive(Debug, Clone)]
 pub struct Volume {
@@ -66,6 +66,6 @@ impl Controller {
     }
 
     pub async fn stop_all(&self) {
-        for player in self.state.get_players() {}
+        for _player in self.state.get_players() {}
     }
 }

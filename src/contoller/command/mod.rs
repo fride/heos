@@ -1,15 +1,15 @@
-use tokio::sync::{oneshot, watch};
+use tokio::sync::{oneshot};
 use tokio::sync::mpsc;
-use tokio::sync::oneshot::Receiver;
+
 
 pub use get_music_sources::GetMusicSources;
 pub use get_players::GetPlayers;
 pub use init::InitController;
 
 use crate::{Connection, HeosResult};
-use crate::api::HeosApi;
+
 use crate::contoller::State;
-use crate::model::player::PlayerInfo;
+
 
 // https://github.com/tokio-rs/mini-redis/blob/master/src/cmd/get.rs
 // can I twist this to make my code nicer.
@@ -51,7 +51,7 @@ impl CommandChannel {
         let (command_channel, mut api_receiver) =
             mpsc::channel::<(ApiCommand, Option<CommandNotifier>)>(16);
 
-        let join = tokio::spawn(async move {
+        let _join = tokio::spawn(async move {
             tracing::info!("waiting for commands.");
             while let Some((command, notify)) = api_receiver.recv().await {
                 tracing::info!("received command");
@@ -70,7 +70,7 @@ impl CommandChannel {
     pub async fn send<A: Into<ApiCommand>>(&self, command: A) -> HeosResult<()> {
         tracing::debug!("Enqueue command. {:?}", self.0.capacity());
         let command = command.into();
-        let res = self.0.send((command, None)).await.unwrap();
+        let _res = self.0.send((command, None)).await.unwrap();
         Ok(())
     }
 
@@ -92,7 +92,7 @@ impl CommandChannel {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     #[tokio::test]
     pub async fn stuff() {
