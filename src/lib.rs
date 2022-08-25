@@ -14,10 +14,17 @@ pub mod connection;
 mod driver;
 mod error;
 pub mod model;
+mod spielwiese;
+
+mod contoller;
+pub use contoller::Controller;
+pub use contoller::Volume;
+
 use crate::connection::Connection;
 pub use crate::driver::HeosDriver;
 
-pub mod reactive;
+// TODO move to a playground
+// pub mod reactive;
 pub type HeosResult<T> = Result<T, HeosError>;
 
 pub async fn connect<A>(ip: Option<A>) -> HeosResult<Connection>

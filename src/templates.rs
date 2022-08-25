@@ -1,7 +1,4 @@
 use std::collections::BTreeMap;
-
-
-
 use askama::Template;
 use druid::Widget;
 

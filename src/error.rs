@@ -1,7 +1,9 @@
+use std::error::Error;
 use std::num::ParseIntError;
 
 use qs;
 use thiserror::Error;
+use tokio::sync::oneshot::error::RecvError;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum HeosErrorCode {
@@ -68,6 +70,13 @@ impl From<&str> for HeosError {
         HeosError::Error {
             message: error.to_owned(),
         }
+    }
+}
+
+impl From<RecvError> for HeosError {
+    fn from(err: RecvError) -> Self {
+        HeosError::Error { message: format!("{}", "failed to receive")}
+
     }
 }
 impl From<String> for HeosError {

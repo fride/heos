@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::net::IpAddr;
-use std::sync::{Arc, Mutex};
 use chrono::{DateTime, Utc};
 use druid::widget::Controller;
 use crate::{Connection, HeosResult};

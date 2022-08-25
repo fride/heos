@@ -1,11 +1,7 @@
 use chrono::Duration;
-
 use std::fmt::Formatter;
-
 use crate::model::player::{MediaType, NowPlayingMedia, PlayState, PlayerInfo};
 use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
-
-
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayingProgress {
@@ -71,6 +67,8 @@ pub enum NowPlaying {
     Station {
         station_name: String,
         album_id: String,
+        album: String,
+        artist: String,
         source_id: SourceId,
         image_url: String,
     },
@@ -109,6 +107,7 @@ impl From<Option<NowPlayingMedia>> for NowPlaying {
 
 impl From<NowPlayingMedia> for NowPlaying {
     fn from(now: NowPlayingMedia) -> Self {
+        tracing::info!("now playing:: {:?}", &now);
         match now.media_type {
             MediaType::Song => NowPlaying::Song {
                 song: now.song.clone(),
@@ -121,7 +120,9 @@ impl From<NowPlayingMedia> for NowPlaying {
             },
             MediaType::Station => NowPlaying::Station {
                 station_name: now.station.unwrap_or("".to_owned()),
-                album_id: now.album,
+                album_id: now.album_id,
+                album: now.album,
+                artist: now.artist,
                 source_id: now.sid,
                 image_url: now.image_url,
             },

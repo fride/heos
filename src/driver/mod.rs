@@ -54,7 +54,7 @@ impl HeosDriver {
         setup(connection).await
     }
     pub async fn init(&self) {
-        self.0.send(ApiCommand::RefreshState).await;
+        let _ = self.0.send(ApiCommand::RefreshState).await;
     }
 
     pub fn zones(&self) -> Vec<Zone> {
