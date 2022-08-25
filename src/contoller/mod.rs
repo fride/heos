@@ -1,24 +1,28 @@
-use crate::api::HeosApi;
-use crate::connection::CommandExecutor;
-use crate::contoller::command::{
-    ApiCommand, CommandChannel, GetMusicSources, GetPlayers, InitController,
-};
-use crate::model::browse::MusicSource;
-use crate::model::event::HeosEvent;
-use crate::model::player::{
-    NowPlayingMedia, PlayState, PlayerInfo, PlayerPlayState, PlayerVolume, Progress,
-};
-use crate::model::zone::NowPlaying;
-use crate::model::{Level, OnOrOff, PlayerId, QueueId};
-use crate::{Connection, HeosResult};
-use chrono::Utc;
 use std::collections::btree_map::Values;
 use std::collections::BTreeMap;
 use std::iter::Cloned;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
+
+use chrono::Utc;
 use tokio::sync::{oneshot, watch};
+use tokio::sync::mpsc;
+
+use state::*;
+
+use crate::{Connection, HeosResult};
+use crate::api::HeosApi;
+use crate::connection::CommandExecutor;
+use crate::contoller::command::{
+    ApiCommand, CommandChannel, GetMusicSources, GetPlayers, InitController,
+};
+use crate::model::{Level, OnOrOff, PlayerId, QueueId};
+use crate::model::browse::MusicSource;
+use crate::model::event::HeosEvent;
+use crate::model::player::{
+    NowPlayingMedia, PlayerInfo, PlayerPlayState, PlayerVolume, PlayState, Progress,
+};
+use crate::model::zone::NowPlaying;
 
 #[derive(Debug, Clone)]
 pub struct Volume {
@@ -29,8 +33,6 @@ pub struct Volume {
 mod command;
 
 mod state;
-use state::*;
-
 mod event;
 
 #[derive(Debug)]

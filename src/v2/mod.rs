@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
+
 use crate::{Connection, HeosResult};
 use crate::api::HeosApi;
 use crate::model::group::GroupInfo;
 use crate::model::player::PlayerInfo;
 use crate::model::PlayerId;
 use crate::model::zone::{NowPlaying, Player, PlayingProgress};
-
 
 pub enum ModelUpdate{
     Player(Vec<PlayerInfo>),

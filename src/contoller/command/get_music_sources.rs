@@ -1,11 +1,12 @@
+use tokio::sync::oneshot;
+use tokio::sync::oneshot::Receiver;
+
+use crate::{Connection, HeosError, HeosResult};
 use crate::api::HeosApi;
 use crate::contoller::command::ApiCommand;
 use crate::contoller::State;
 use crate::model::browse::MusicSource;
 use crate::model::player::PlayerInfo;
-use crate::{Connection, HeosError, HeosResult};
-use tokio::sync::oneshot;
-use tokio::sync::oneshot::Receiver;
 
 // https://rust-unofficial.github.io/patterns/patterns/behavioural/command.html
 // https://users.rust-lang.org/t/how-to-store-async-function-pointers/40846

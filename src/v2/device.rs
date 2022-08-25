@@ -1,13 +1,14 @@
-use std::collections::BTreeMap;
-use std::net::IpAddr;
 use chrono::{DateTime, Utc};
 use druid::widget::Controller;
-use crate::{Connection, HeosResult};
-use crate::model::{PlayerId, SourceId};
-use crate::v2::types::*;
+use std::collections::BTreeMap;
+use std::net::IpAddr;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
+
+use crate::{Connection, HeosResult};
 use crate::connection::CommandResult;
+use crate::model::{PlayerId, SourceId};
+use crate::v2::types::*;
 
 pub struct HeosCommand {
     payload: String,

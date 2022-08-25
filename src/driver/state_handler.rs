@@ -1,9 +1,9 @@
-use crate::driver::state::DriverState;
-use crate::driver::{Shared, StateUpdates};
-use crate::model::group::GroupVolume;
-
-use crate::model::zone::PlayingProgress;
 use tokio::sync::mpsc::Receiver;
+
+use crate::driver::{Shared, StateUpdates};
+use crate::driver::state::DriverState;
+use crate::model::group::GroupVolume;
+use crate::model::zone::PlayingProgress;
 
 pub fn create_state_handler(state: Shared<DriverState>, mut results: Receiver<StateUpdates>) {
     tokio::spawn(async move {

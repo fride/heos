@@ -62,14 +62,13 @@ impl<St: 'static, A: 'static, B: 'static> ReactiveUnit<St, A, B> {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::driver::state::DriverState;
     use crate::driver::ApiCommand;
+    use crate::driver::state::DriverState;
     use crate::model::event::HeosEvent;
-    use crate::model::player::PlayerInfo;
-    use crate::model::zone::Player;
     use crate::model::Level;
     use crate::model::OnOrOff::Off;
+    use crate::model::player::PlayerInfo;
+    use crate::model::zone::Player;
 
     use super::*;
 

@@ -1,6 +1,7 @@
+use std::collections::BTreeMap;
+
 use askama::Template;
 use druid::Widget;
-use std::collections::BTreeMap;
 
 use rusty_heos::model::zone::NowPlaying;
 use rusty_heos::model::zone::Zone;

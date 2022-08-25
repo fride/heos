@@ -1,7 +1,9 @@
-use crate::model::player::{MediaType, NowPlayingMedia, PlayState, PlayerInfo};
-use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
-use chrono::Duration;
 use std::fmt::Formatter;
+
+use chrono::Duration;
+
+use crate::model::{Level, Milliseconds, OnOrOff, PlayerId, Repeat, SourceId};
+use crate::model::player::{MediaType, NowPlayingMedia, PlayerInfo, PlayState};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PlayingProgress {

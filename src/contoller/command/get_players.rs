@@ -1,12 +1,13 @@
-use crate::api::HeosApi;
-use crate::contoller::command::{ApiCommand, GetMusicSources};
-use crate::contoller::{State, Volume};
-use crate::model::player::PlayerInfo;
-use crate::model::OnOrOff::On;
-use crate::{Connection, HeosResult};
 use log::trace;
 use tokio::sync::oneshot;
 use tokio::sync::oneshot::Receiver;
+
+use crate::{Connection, HeosResult};
+use crate::api::HeosApi;
+use crate::contoller::{State, Volume};
+use crate::contoller::command::{ApiCommand, GetMusicSources};
+use crate::model::OnOrOff::On;
+use crate::model::player::PlayerInfo;
 
 #[derive(Debug, Default)]
 pub struct GetPlayers;

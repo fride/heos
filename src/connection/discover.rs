@@ -1,12 +1,13 @@
 use std::net::IpAddr;
 
-use crate::HeosError;
+use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use ssdp::header::{HeaderMut, Man, MX, ST};
 use ssdp::message::{Config, Multicast, SearchRequest, SearchResponse};
-use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use tokio::runtime;
 use tokio::sync::mpsc;
 use tracing::debug;
+
+use crate::HeosError;
 
 // todo this would make the entire app async. Don't know if I need it.
 pub fn device_channel() -> mpsc::Receiver<IpAddr> {

@@ -1,13 +1,18 @@
+extern crate itertools;
 #[macro_use]
 extern crate serde_derive;
 // extern crate futures;
 extern crate serde_json;
 extern crate serde_qs as qs;
 
-extern crate itertools;
-
-pub use error::*;
 use tokio::net::ToSocketAddrs;
+
+pub use contoller::Controller;
+pub use contoller::Volume;
+pub use error::*;
+
+use crate::connection::Connection;
+pub use crate::driver::HeosDriver;
 
 pub mod api;
 pub mod connection;
@@ -17,11 +22,6 @@ pub mod model;
 mod spielwiese;
 
 mod contoller;
-pub use contoller::Controller;
-pub use contoller::Volume;
-
-use crate::connection::Connection;
-pub use crate::driver::HeosDriver;
 
 // TODO move to a playground
 // pub mod reactive;

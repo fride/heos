@@ -1,11 +1,13 @@
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+
+use tokio::sync::watch;
+
 use crate::contoller::Volume;
 use crate::model::browse::MusicSource;
 use crate::model::player::*;
-use crate::model::zone::NowPlaying;
 use crate::model::PlayerId;
-use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex};
-use tokio::sync::watch;
+use crate::model::zone::NowPlaying;
 
 type Shared<T> = Arc<Mutex<T>>;
 

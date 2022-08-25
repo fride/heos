@@ -1,20 +1,20 @@
+use std::sync::{Arc, Mutex};
+
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
+
+use crate::{HeosError, HeosResult};
+use crate::connection::Connection;
+use crate::driver::state::DriverState;
+use crate::model::{GroupId, Level, Milliseconds, OnOrOff, PlayerId, Repeat};
+use crate::model::group::{GroupInfo, GroupVolume};
+use crate::model::player::{PlayerInfo, PlayerVolume, PlayState};
+use crate::model::zone::{NowPlaying, Player, Zone};
+
 mod command_handler;
 mod event_handler;
 pub mod state;
 mod state_handler;
-
-use crate::connection::Connection;
-use crate::driver::state::DriverState;
-use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::Sender;
-
-use crate::model::group::{GroupInfo, GroupVolume};
-use crate::model::player::{PlayState, PlayerInfo, PlayerVolume};
-use crate::model::{GroupId, Level, Milliseconds, OnOrOff, PlayerId, Repeat};
-use crate::{HeosError, HeosResult};
-
-use crate::model::zone::{NowPlaying, Player, Zone};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ApiCommand {

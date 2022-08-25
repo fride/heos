@@ -1,4 +1,5 @@
 use std::fmt;
+
 pub type PlayerId = i64;
 pub type GroupId = i64;
 pub type QueueId = i64;

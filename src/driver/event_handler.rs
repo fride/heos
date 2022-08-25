@@ -1,9 +1,9 @@
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
+use crate::{Connection, HeosResult};
 use crate::driver::{ApiCommand, StateUpdates};
 use crate::model::event::HeosEvent;
-use crate::{Connection, HeosResult};
 
 fn event_to_results(event: HeosResult<HeosEvent>) -> (Vec<ApiCommand>, Vec<StateUpdates>) {
     match event {

@@ -1,10 +1,11 @@
+use tokio_stream::StreamExt;
+
+use crate::{Connection, HeosResult};
 use crate::contoller::command::{CommandChannel, GetPlayers};
 use crate::contoller::state::State;
 use crate::contoller::Volume;
 use crate::model::event::HeosEvent;
 use crate::model::player::PlayerPlayState;
-use crate::{Connection, HeosResult};
-use tokio_stream::StreamExt;
 
 pub async fn event_handler(command_channel: CommandChannel, connection: Connection, state: State) {
     tokio::spawn(async move {

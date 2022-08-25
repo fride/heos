@@ -1,26 +1,26 @@
-use crate::api::HeosApi;
-use crate::model::player::PlayerInfo;
-use crate::{Connection, HeosResult};
+use tokio::sync::{oneshot, watch};
 use tokio::sync::mpsc;
 use tokio::sync::oneshot::Receiver;
-use tokio::sync::{oneshot, watch};
+
+pub use get_music_sources::GetMusicSources;
+pub use get_players::GetPlayers;
+pub use init::InitController;
+
+use crate::{Connection, HeosResult};
+use crate::api::HeosApi;
+use crate::contoller::State;
+use crate::model::player::PlayerInfo;
 
 // https://github.com/tokio-rs/mini-redis/blob/master/src/cmd/get.rs
 // can I twist this to make my code nicer.
 
 mod get_players;
-pub use get_players::GetPlayers;
-
 // mod get_groups;
 // pub use get_groups::GetGroups;
 
 mod get_music_sources;
-pub use get_music_sources::GetMusicSources;
-
 mod init;
-pub use init::InitController;
 
-use crate::contoller::State;
 pub type CommandNotifier = oneshot::Sender<HeosResult<()>>;
 
 #[derive(Debug)]
