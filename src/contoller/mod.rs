@@ -18,9 +18,7 @@ pub struct Volume {
 mod command;
 mod event;
 mod state;
-mod state2;
 
-pub mod command2;
 
 #[derive(Debug)]
 pub struct Controller {

@@ -7,8 +7,8 @@ extern crate serde_qs as qs;
 
 use tokio::net::ToSocketAddrs;
 
-pub use contoller::Controller;
-pub use contoller::Volume;
+// pub use contoller::Controller;
+// pub use contoller::Volume;
 pub use error::*;
 
 use crate::connection::Connection;
@@ -21,9 +21,7 @@ mod error;
 pub mod model;
 mod spielwiese;
 
-mod contoller;
-
-pub use contoller::command2::*;
+// mod contoller;
 
 // TODO move to a playground
 // pub mod reactive;
