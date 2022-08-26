@@ -23,6 +23,8 @@ mod spielwiese;
 
 mod contoller;
 
+pub use contoller::command2::*;
+
 // TODO move to a playground
 // pub mod reactive;
 pub type HeosResult<T> = Result<T, HeosError>;

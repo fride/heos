@@ -9,8 +9,10 @@ use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
 use actix_web::web::Data;
 use askama::Template;
 use pretty_env_logger::env_logger;
+use tokio::sync::oneshot;
 
-use rusty_heos::{Controller, HeosDriver, HeosResult};
+use rusty_heos::{Command, Controller, HeosDriver, HeosResult};
+use rusty_heos::foo;
 
 mod templates;
 
@@ -91,12 +93,23 @@ async fn manual_hello() -> impl Responder {
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     // let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
-    let connection = rusty_heos::connect::<&str>(None).await?;
-    let mut controller = Controller::new(connection).await?;
+    let mut connection = rusty_heos::connect::<&str>(None).await?;
 
-    controller.init().await;
-    println!("controller: {:?}", &controller.get_players());
-    println!("controller: {:?}", &controller.get_music_sources());
+    let (s,mut r) = tokio::sync::mpsc::channel::<Command>(12);
+    tokio::spawn(async move {
+       while let Some(command) = r.recv().await {
+            command.apply(&mut connection).await;
+       }
+    });
+    let players = foo(&s).await;
+    println!("Players: {:?}", players);
+
+    //
+    // let mut controller = Controller::new(connection).await?;
+    //
+    // controller.init().await;
+    // println!("controller: {:?}", &controller.get_players());
+    // println!("controller: {:?}", &controller.get_music_sources());
 
     //
     // let driver = rusty_heos::create_driver(connection).await?;

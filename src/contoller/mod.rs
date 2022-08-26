@@ -18,6 +18,9 @@ pub struct Volume {
 mod command;
 mod event;
 mod state;
+mod state2;
+
+pub mod command2;
 
 #[derive(Debug)]
 pub struct Controller {
@@ -31,10 +34,12 @@ impl Controller {
         let command_connection = connection.try_clone().await?;
         let api = CommandChannel::new(command_connection, state.clone());
         let _ = event::event_handler(api.clone(), connection, state.clone()).await;
-        Ok(Self { state, api })
+        let controller = Self { state, api };
+        controller.init().await;
+        Ok(controller)
     }
 
-    pub async fn init(&mut self) {
+    async fn init(&self) {
         let (s, r) = oneshot::channel();
         let _ = self.api.send_ack(InitController, s).await;
         tracing::info!("Init.");

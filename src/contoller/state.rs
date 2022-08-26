@@ -9,6 +9,9 @@ use crate::model::zone::NowPlaying;
 use crate::model::{GroupId, Level, Milliseconds, PlayerId};
 
 pub type Shared<T> = Arc<Mutex<T>>;
+pub fn shared<T>(value: T) -> Shared<T> {
+    Arc::new(Mutex::new(value))
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct State {
