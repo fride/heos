@@ -6,8 +6,8 @@ use itertools::Itertools;
 
 use crate::model::group::{GroupInfo, GroupMember, GroupMembers, GroupRole, GroupVolume};
 use crate::model::player::{PlayerInfo, PlayerVolume};
-use crate::model::PlayerId;
 use crate::model::zone::*;
+use crate::model::PlayerId;
 
 fn remove_if<T, P>(vec: &mut Vec<T>, pred: P) -> Option<T>
 where

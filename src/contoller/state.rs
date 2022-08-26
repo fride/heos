@@ -1,23 +1,25 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
-
-
 use crate::contoller::Volume;
 use crate::model::browse::MusicSource;
+use crate::model::group::{GroupInfo, GroupRole, GroupVolume};
 use crate::model::player::*;
-use crate::model::PlayerId;
 use crate::model::zone::NowPlaying;
+use crate::model::{GroupId, Level, Milliseconds, PlayerId};
 
-type Shared<T> = Arc<Mutex<T>>;
+pub type Shared<T> = Arc<Mutex<T>>;
 
 #[derive(Debug, Clone, Default)]
 pub struct State {
     user: Shared<Option<String>>,
     players: Shared<BTreeMap<PlayerId, PlayerInfo>>,
+    groups: Shared<BTreeMap<GroupId, GroupInfo>>,
+    group_volumes: Shared<BTreeMap<GroupId, Level>>,
     player_states: Shared<BTreeMap<PlayerId, PlayState>>,
     player_volumes: Shared<BTreeMap<PlayerId, Volume>>,
     now_playing: Shared<BTreeMap<PlayerId, NowPlaying>>,
+    now_playing_progress: Shared<BTreeMap<PlayerId, NowPlayingProgress>>,
     music_sources: Shared<Vec<MusicSource>>,
 }
 
@@ -60,5 +62,46 @@ impl State {
         let players = self.players.lock().unwrap();
         let res = players.values().cloned().collect();
         res
+    }
+
+    pub fn set_groups(&self, new_groups: Vec<GroupInfo>) {
+        let mut players = self.players.lock().unwrap();
+        let mut groups = self.groups.lock().unwrap();
+        groups.clear();
+        for group in new_groups {
+            for member in &group.players {
+                match &member.role {
+                    GroupRole::Leader => players
+                        .entry(member.pid)
+                        .and_modify(|player| player.gid = Some(member.pid)),
+                    GroupRole::Member => players
+                        .entry(group.gid)
+                        .and_modify(|player| player.gid = Some(member.pid)),
+                };
+            }
+            groups.insert(group.gid, group);
+        }
+    }
+    pub fn get_groups(&self) -> Vec<GroupInfo> {
+        let groups = self.groups.lock().unwrap();
+        let res = groups.values().cloned().collect();
+        res
+    }
+    pub fn set_group_volume(&self, volume: GroupVolume) {
+        let mut group_volumes = self.group_volumes.lock().unwrap();
+        group_volumes.insert(volume.group_id, volume.level);
+    }
+    pub fn set_now_playing_progress(
+        &self,
+        player_id: PlayerId,
+        cur_pos: Milliseconds,
+        duration: Option<Milliseconds>,
+    ) {
+        let mut now_playing_progress = self.now_playing_progress.lock().unwrap();
+        let mut entry = now_playing_progress
+            .entry(player_id)
+            .or_insert(NowPlayingProgress::default());
+        entry.duration_in_ms = duration;
+        entry.current_position = cur_pos;
     }
 }

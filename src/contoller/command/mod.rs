@@ -1,25 +1,21 @@
-use tokio::sync::{oneshot};
-use tokio::sync::mpsc;
+// https://github.com/tokio-rs/mini-redis/blob/master/src/cmd/get.rs
 
-
+pub use crate::contoller::command::now_playing::GetNowPlaying;
+pub use crate::contoller::command::set_play_state::SetPlayState;
+use crate::contoller::State;
+use crate::{Connection, HeosResult};
+pub use get_groups::GetGroups;
 pub use get_music_sources::GetMusicSources;
 pub use get_players::GetPlayers;
 pub use init::InitController;
-
-use crate::{Connection, HeosResult};
-
-use crate::contoller::State;
-
-
-// https://github.com/tokio-rs/mini-redis/blob/master/src/cmd/get.rs
-// can I twist this to make my code nicer.
-
-mod get_players;
-// mod get_groups;
-// pub use get_groups::GetGroups;
-
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
+mod get_groups;
 mod get_music_sources;
+mod get_players;
 mod init;
+mod now_playing;
+mod set_play_state;
 
 pub type CommandNotifier = oneshot::Sender<HeosResult<()>>;
 
@@ -28,6 +24,9 @@ pub enum ApiCommand {
     GetPlayers(GetPlayers),
     GetMusicSources(GetMusicSources),
     InitController(InitController),
+    GetGroups(GetGroups),
+    GetNowPlaying(GetNowPlaying),
+    SetPlayState(SetPlayState),
 }
 
 impl ApiCommand {
@@ -38,6 +37,13 @@ impl ApiCommand {
                 get_music_sources.apply(connection, state).await
             }
             ApiCommand::InitController(init) => init.apply(connection, state).await,
+            ApiCommand::GetGroups(get_groups) => get_groups.apply(connection, state).await,
+            ApiCommand::GetNowPlaying(get_now_playing) => {
+                get_now_playing.apply(connection, state).await
+            }
+            ApiCommand::SetPlayState(set_play_state) => {
+                set_play_state.apply(connection, state).await
+            }
         }
     }
 }
@@ -92,7 +98,6 @@ impl CommandChannel {
 
 #[cfg(test)]
 mod tests {
-    
 
     #[tokio::test]
     pub async fn stuff() {

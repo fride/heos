@@ -1,16 +1,13 @@
-
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::oneshot;
 
-
-
-use crate::{Connection, HeosResult};
 use crate::connection::CommandExecutor;
 use crate::model::event::HeosEvent;
 use crate::model::player::PlayerInfo;
-use crate::model::PlayerId;
 use crate::model::system::RegisteredForChangeEvents;
+use crate::model::PlayerId;
+use crate::{Connection, HeosResult};
 
 pub type Responder<T> = oneshot::Sender<T>;
 pub type CommandChannel = mpsc::Sender<HeosCommand>;

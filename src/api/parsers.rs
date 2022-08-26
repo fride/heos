@@ -5,13 +5,13 @@ use regex::Regex;
 use serde_json::Value;
 
 use crate::connection::{CommandResponse, EventResponse};
-use crate::model::*;
 use crate::model::browse::*;
 use crate::model::event::*;
 use crate::model::group::{GroupInfo, GroupVolume};
 use crate::model::player::*;
 use crate::model::system::*;
 use crate::model::zone::NowPlaying;
+use crate::model::*;
 
 impl TryFrom<CommandResponse> for Vec<PlayerInfo> {
     type Error = crate::HeosError;

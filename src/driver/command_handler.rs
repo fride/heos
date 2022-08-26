@@ -1,12 +1,12 @@
 use im::Vector;
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::{Connection, HeosError};
 use crate::api::HeosApi;
 use crate::driver::{ApiCommand, StateUpdates};
-use crate::model::{GroupId, PlayerId};
 use crate::model::group::GroupInfo;
 use crate::model::player::PlayerInfo;
+use crate::model::{GroupId, PlayerId};
+use crate::{Connection, HeosError};
 
 pub fn create_command_handler(
     mut connection: Connection,

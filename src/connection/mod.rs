@@ -11,8 +11,8 @@ use tracing::{debug, warn};
 
 pub use frame::*;
 
-use crate::{HeosError, HeosResult};
 use crate::model::event::HeosEvent;
+use crate::{HeosError, HeosResult};
 
 mod discover;
 mod frame;

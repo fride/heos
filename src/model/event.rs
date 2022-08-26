@@ -1,5 +1,5 @@
-use super::*;
 use super::player::*;
+use super::*;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub enum HeosEvent {

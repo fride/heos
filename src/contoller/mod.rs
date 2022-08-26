@@ -1,39 +1,23 @@
 
-
-
-
-
-
-
-use tokio::sync::{oneshot};
-
-
-use state::*;
-
-use crate::{Connection, HeosResult};
 use crate::api::HeosApi;
-
-use crate::contoller::command::{
-    CommandChannel, InitController,
-};
-use crate::model::{Level, OnOrOff};
+use crate::contoller::command::SetPlayState;
+use crate::contoller::command::{CommandChannel, InitController};
 use crate::model::browse::MusicSource;
+use crate::model::{Level, OnOrOff};
+use crate::{Connection, HeosResult};
+use state::*;
+use tokio::sync::oneshot;
 
-use crate::model::player::{
-    PlayerInfo,
-};
-
+use crate::model::player::{PlayerInfo, PlayerPlayState};
 
 #[derive(Debug, Clone)]
 pub struct Volume {
     pub level: Level,
     pub mute: OnOrOff,
 }
-
 mod command;
-
-mod state;
 mod event;
+mod state;
 
 #[derive(Debug)]
 pub struct Controller {
@@ -49,6 +33,7 @@ impl Controller {
         let _ = event::event_handler(api.clone(), connection, state.clone()).await;
         Ok(Self { state, api })
     }
+
     pub async fn init(&mut self) {
         let (s, r) = oneshot::channel();
         let _ = self.api.send_ack(InitController, s).await;
@@ -65,7 +50,24 @@ impl Controller {
         self.state.get_music_sources()
     }
 
+    pub async fn set_play_state(&self, state: PlayerPlayState) {
+        let (s, r) = oneshot::channel();
+        let _ = self
+            .api
+            .send_ack(
+                SetPlayState {
+                    state: state.state,
+                    player_id: state.player_id,
+                },
+                s,
+            )
+            .await;
+        r.await;
+    }
+
     pub async fn stop_all(&self) {
-        for _player in self.state.get_players() {}
+        for player in self.state.get_players() {
+            self.api.send(SetPlayState::stop(player.pid)).await;
+        }
     }
 }

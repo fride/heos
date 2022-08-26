@@ -1,13 +1,9 @@
-
-
-
-
-use crate::{Connection, HeosResult};
 use crate::api::HeosApi;
+use crate::contoller::command::ApiCommand;
 use crate::contoller::{State, Volume};
-use crate::contoller::command::{ApiCommand};
-use crate::model::OnOrOff::On;
 use crate::model::player::PlayerInfo;
+use crate::model::OnOrOff::On;
+use crate::{Connection, HeosResult};
 
 #[derive(Debug, Default)]
 pub struct GetPlayers;

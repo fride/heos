@@ -1,11 +1,11 @@
 use tokio_stream::StreamExt;
 
-use crate::{Connection};
-use crate::contoller::command::{CommandChannel, GetPlayers};
+use crate::contoller::command::{CommandChannel, GetMusicSources, GetNowPlaying, GetPlayers};
 use crate::contoller::state::State;
 use crate::contoller::Volume;
 use crate::model::event::HeosEvent;
 use crate::model::player::PlayerPlayState;
+use crate::Connection;
 
 pub async fn event_handler(command_channel: CommandChannel, connection: Connection, state: State) {
     tokio::spawn(async move {
@@ -26,7 +26,9 @@ pub async fn event_handler(command_channel: CommandChannel, connection: Connecti
 
 pub async fn handle_event(event: HeosEvent, command_channel: &CommandChannel, state: &State) {
     match event {
-        HeosEvent::SourcesChanged => {}
+        HeosEvent::SourcesChanged => {
+            let _ = command_channel.send(GetMusicSources).await;
+        }
         HeosEvent::PlayersChanged => {
             let _ = command_channel.send(GetPlayers).await;
         }
@@ -40,13 +42,15 @@ pub async fn handle_event(event: HeosEvent, command_channel: &CommandChannel, st
                 state: play_state,
             });
         }
-        HeosEvent::PlayerNowPlayingChanged { player_id: _ } => {}
+        HeosEvent::PlayerNowPlayingChanged { player_id } => {
+            command_channel.send(GetNowPlaying { player_id }).await;
+        }
         HeosEvent::PlayerNowPlayingProgress {
-            player_id: _,
-            cur_pos: _,
-            duration: _,
+            player_id,
+            cur_pos,
+            duration,
         } => {
-
+            state.set_now_playing_progress(player_id, cur_pos, duration);
             //player_progress.insert(player_id, Progress{current_position: cur_pos, duration_in_ms: duration.unwrap_or_default()});
         }
         HeosEvent::PlayerPlaybackError { .. } => {}
