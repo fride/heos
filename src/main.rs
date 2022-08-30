@@ -2,6 +2,7 @@
 extern crate serde_derive;
 
 use std::sync::Mutex;
+use std::time::Duration;
 
 use actix_web::http::header::HeaderMap;
 use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
@@ -11,86 +12,58 @@ use askama::Template;
 use pretty_env_logger::env_logger;
 use tokio::sync::oneshot;
 
-use rusty_heos::{CommandChannel, HeosDriver, HeosResult};
+use rusty_heos::{create_api, HeosApi, HeosResult};
+use rusty_heos::driver::*;
 
 mod templates;
-
-fn is_json(headers: &HeaderMap) -> bool {
-    headers.get("Accept").map_or(false, |header| {
-        header.to_str().unwrap().contains("application/json")
-    })
-}
-
-#[get("/")]
-async fn index(data: Data<Mutex<HeosDriver>>) -> String {
-    let data = data.lock().unwrap();
-    let zones = data.zones();
-    let str = serde_json::to_string_pretty(&zones).unwrap();
-    format!("{}", str)
-}
-
-#[get("/zones")]
-async fn zones_route(
-    req: HttpRequest,
-    data: Data<Mutex<HeosDriver>>,
-) -> actix_web::Result<HttpResponse> {
-    let data = data.lock().unwrap();
-    let zones = data.zones();
-    if is_json(req.headers()) {
-        println!("sending json");
-        let json = serde_json::to_string_pretty(&zones).unwrap();
-        Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .body(json))
-    } else {
-        let template = templates::ZonesTemplate::new(zones);
-        let s = template.render().unwrap();
-        Ok(HttpResponse::Ok().content_type("text/html").body(s))
-    }
-}
-
-#[get("/players")]
-async fn all_players(
-    req: HttpRequest,
-    data: Data<Mutex<HeosDriver>>,
-) -> actix_web::Result<HttpResponse> {
-    println!("Got /players");
-    let data = data.lock().unwrap();
-    println!("Got /players 1");
-    let players = data.players();
-    println!("Got /players 2");
-    let headers = req.headers();
-    println!("Got /players 3");
-    if headers
-        .get("Accept")
-        //TODO this is ugly!
-        .map_or(false, |header| {
-            header.to_str().unwrap().contains("application/json")
-        })
-    {
-        let json = serde_json::to_string_pretty(&players).unwrap();
-        Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .body(json))
-    } else {
-        let json = serde_json::to_string_pretty(&players).unwrap();
-        let html = format!("<pre>{}</pre>", &json);
-        Ok(HttpResponse::Ok().content_type("text/html").body(html))
-    }
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
 
 #[actix_web::main]
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+
+    let mut connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
+    // let mut connection = rusty_heos::connect::<&str>(None).await?;
+
+    let driver = Driver::create(connection).await?;
+    let players = driver.get_players();
+
+    let x = tokio::spawn(async move {
+        loop {
+            let players = &driver.get_players();
+            for player in players {
+                println!("Player: {}", player.to_string());
+            }
+            for zone in driver.get_zones() {
+                println!("Zone: {}", zone.to_string());
+            }
+            tokio::time::sleep(Duration::from_secs(4)).await;
+        }
+    });
+    x.await;
+
+
+    // let api2 = api.clone();
+    // let api3 = api.clone();
+    // let j1 = tokio::spawn(async move {
+    //     let players = api.get_player_infos().await;
+    //     println!("Players: {:?}", &players);
+    //     players
+    // });
+    // let j2 = tokio::spawn(async move {
+    //     let players = api2.get_player_infos().await;
+    //     println!("Players: {:?}", &players);
+    //     players
+    // });
+    // let j3 = tokio::spawn(async move {
+    //     let players = api3.get_player_infos().await;
+    //     println!("Players: {:?}", &players);
+    //     players
+    // });
+    //
+    // j2.await;
+    // j1.await;
+    // j3.await;
+
     // let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
     // let mut connection = rusty_heos::connect::<&str>(None).await?;
     // let mut channel : CommandChannel = connection.into();

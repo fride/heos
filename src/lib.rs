@@ -12,14 +12,18 @@ use tokio::net::ToSocketAddrs;
 pub use error::*;
 
 use crate::connection::Connection;
-pub use crate::driver::HeosDriver;
+//pub use crate::driver::HeosDriver;
 
-pub mod api;
+mod api;
+pub use api::HeosApi;
+
 pub mod connection;
-mod driver;
+//mod driver;
 mod error;
 pub mod model;
 mod spielwiese;
+pub mod driver;
+pub(crate) mod util;
 
 // mod contoller;
 
@@ -36,6 +40,7 @@ where
         None => connection::Connection::find().await,
     }
 }
-pub async fn create_driver(connection: Connection) -> HeosResult<HeosDriver> {
-    HeosDriver::new(connection).await
+pub async fn create_api(connection: Connection) -> HeosResult<HeosApi> {
+    Ok(HeosApi::new(connection))
 }
+
