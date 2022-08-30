@@ -19,10 +19,11 @@ pub use api::HeosApi;
 
 pub mod connection;
 //mod driver;
+pub mod driver;
 mod error;
 pub mod model;
 mod spielwiese;
-pub mod driver;
+pub mod ui;
 pub(crate) mod util;
 
 // mod contoller;
@@ -43,4 +44,3 @@ where
 pub async fn create_api(connection: Connection) -> HeosResult<HeosApi> {
     Ok(HeosApi::new(connection))
 }
-

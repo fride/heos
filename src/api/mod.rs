@@ -13,10 +13,9 @@ use crate::model::player::{
 };
 use crate::model::zone::NowPlaying;
 
-mod parsers;
 mod event;
+mod parsers;
 type Cmd = (String, oneshot::Sender<HeosResult<CommandResponse>>);
-
 
 pub enum ApiResponse {
     GetPlayerInfos(Vec<PlayerInfo>),
@@ -27,9 +26,8 @@ pub enum ApiResponse {
 #[derive(Clone)]
 pub struct HeosApi(mpsc::Sender<Cmd>);
 impl HeosApi {
-
     pub fn new(mut connection: Connection) -> Self {
-        let (s,mut r) = mpsc::channel::<Cmd>(32);
+        let (s, mut r) = mpsc::channel::<Cmd>(32);
 
         // this is the only thread that executes the commands by talking to the heos device.
         tokio::spawn(async move {
@@ -41,10 +39,14 @@ impl HeosApi {
         });
         Self(s)
     }
-    async fn execute_command<A, B>(&self, command: A) -> HeosResult<B> where A: Display + Send, B: TryFrom<CommandResponse, Error=HeosError> {
+    async fn execute_command<A, B>(&self, command: A) -> HeosResult<B>
+    where
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>,
+    {
         let command = format!("{}", command);
         tracing::debug!("executing command: {}", &command);
-        let (s,r) = oneshot::channel();
+        let (s, r) = oneshot::channel();
         let _ = self.0.send((command, s)).await;
         let response = r.await.expect("Failed to receive response")?;
         response.try_into()
@@ -68,7 +70,7 @@ impl HeosApi {
             pid = player_id,
             state = play_state
         ))
-            .await
+        .await
     }
 
     // todo this may return nothing.
@@ -89,7 +91,7 @@ impl HeosApi {
             pid = player_id,
             level = level
         ))
-            .await
+        .await
     }
 
     pub async fn get_mute(&self, player_id: PlayerId) -> HeosResult<PlayerMute> {
@@ -102,7 +104,7 @@ impl HeosApi {
             pid = player_id,
             state = state
         ))
-            .await
+        .await
     }
     pub async fn get_play_mode(&self, player_id: PlayerId) -> HeosResult<PlayerPlayMode> {
         self.execute_command(format!("player/get_play_mode?pid={pid}", pid = player_id))
@@ -120,7 +122,7 @@ impl HeosApi {
             repeat = mode.repeat,
             shuffle = mode.shuffle
         ))
-            .await
+        .await
     }
     pub async fn get_queue(
         &self,
@@ -133,7 +135,7 @@ impl HeosApi {
             start = range.start,
             end = range.end
         ))
-            .await
+        .await
     }
 
     pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>> {
@@ -163,6 +165,6 @@ impl HeosApi {
             pid = group_id,
             level = level
         ))
-            .await
+        .await
     }
 }

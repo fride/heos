@@ -1,33 +1,70 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::{Formatter};
-
+use std::fmt::Formatter;
 
 use serde_json::{json, Value};
 
-use crate::model::{Level, PlayerId};
+use crate::model::browse::MusicSource;
 use crate::model::group::{GroupInfo, GroupRole};
-use crate::model::player::{PlayerInfo, PlayState};
+use crate::model::player::{PlayState, PlayerInfo, QueueEntry};
 use crate::model::zone::NowPlaying;
+use crate::model::{Level, OnOrOff, PlayerId};
 use crate::util::Shared;
 
-
-pub struct Player{
+pub struct Player {
     player_id: PlayerId,
-    state: Shared<DriverState>
+    state: Shared<DriverState>,
+}
+
+#[derive(Debug)]
+pub struct PlayerState<'s> {
+    pub player_id: &'s PlayerId,
+    pub info: &'s PlayerInfo,
+    pub volume: Option<&'s Level>,
+    pub now_playing: Option<&'s NowPlaying>,
+    pub play_state: Option<&'s PlayState>,
 }
 
 impl Player {
     pub fn new(state: Shared<DriverState>, player_id: PlayerId) -> Self {
-        Self{
-            player_id,
-            state
-        }
+        Self { player_id, state }
     }
 
     pub fn name(&self) -> String {
-        self.state.with_state(|s| s.players[&self.player_id].name.clone())
+        self.state
+            .with_state(|s| s.players[&self.player_id].name.clone())
     }
 
+    pub fn get_queue(&self) -> Vec<QueueEntry> {
+        self.state.with_state(|s| {
+            let mut queue = vec![];
+            if let Some(found) = s.player_queues.get(&self.player_id) {
+                for q in found {
+                    queue.push(q.clone());
+                }
+            }
+            queue
+        })
+    }
+
+    pub fn visit<V, R>(&self, mut visitor: V) -> R
+    where
+        V: FnMut(&PlayerState) -> R,
+    {
+        self.state.with_state(|s| {
+            let info = &s.players[&self.player_id];
+            let volume = s.player_volumes.get(&self.player_id);
+            let state = s.player_states.get(&self.player_id);
+            let now_playing = s.player_now_playing.get(&self.player_id);
+            let state = PlayerState {
+                player_id: &self.player_id,
+                now_playing,
+                info,
+                volume,
+                play_state: state,
+            };
+            visitor(&state)
+        })
+    }
     pub fn to_json(&self) -> Value {
         self.state.with_state(|s| {
             let info = &s.players[&self.player_id];
@@ -46,50 +83,47 @@ impl Player {
 
 impl std::fmt::Display for Player {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,"{}", self.to_json())
+        write!(f, "{}", self.to_json())
     }
 }
-pub struct Zone{
+pub struct Zone {
     leader_id: PlayerId,
     member_ids: Vec<PlayerId>,
-    state: Shared<DriverState>
+    state: Shared<DriverState>,
 }
 
-
 impl Zone {
-
-    pub fn new(leader_id: PlayerId,
-               member_ids: Vec<PlayerId>,
-               state: Shared<DriverState>) -> Self {
+    pub fn new(leader_id: PlayerId, member_ids: Vec<PlayerId>, state: Shared<DriverState>) -> Self {
         Self {
             leader_id,
             member_ids,
-            state
+            state,
         }
     }
-    pub fn is_group(&self) -> bool{
+    pub fn is_group(&self) -> bool {
         !self.member_ids.is_empty()
     }
 
-    pub fn name(&self) -> String{
-        self.state.with_state(|s|{
-            if self.is_group(){
+    pub fn name(&self) -> String {
+        self.state.with_state(|s| {
+            if self.is_group() {
                 s.groups[&self.leader_id].name.clone()
-            } else{
+            } else {
                 s.players[&self.leader_id].name.clone()
-            }})
+            }
+        })
     }
 
     pub fn players(&self) -> Vec<Player> {
         let mut players = vec![];
-        players.push(Player{
+        players.push(Player {
             player_id: self.leader_id.clone(),
-            state: self.state.clone()
+            state: self.state.clone(),
         });
         for member in &self.member_ids {
-            players.push(Player{
+            players.push(Player {
                 state: self.state.clone(),
-                player_id: member.clone()
+                player_id: member.clone(),
             })
         }
         players
@@ -144,11 +178,12 @@ pub struct DriverState {
     pub player_now_playing: BTreeMap<PlayerId, NowPlaying>,
     pub groups: BTreeMap<PlayerId, GroupInfo>,
     pub group_volumes: BTreeMap<PlayerId, Level>,
-
+    pub player_mutes: BTreeMap<PlayerId, OnOrOff>,
+    pub player_queues: BTreeMap<PlayerId, Vec<QueueEntry>>,
+    pub music_sources: Vec<MusicSource>,
 }
 
 impl DriverState {
-
     pub fn add_player(&mut self, player: PlayerInfo) {
         self.players.insert(player.pid, player);
     }
@@ -178,13 +213,16 @@ impl DriverState {
 
     pub fn grouped_player_ids(&self) -> Vec<(PlayerId, Vec<PlayerId>)> {
         let mut result = vec![];
-        let mut all_player_ids : BTreeSet<PlayerId> = self.players.keys().cloned().collect();
-        for (player_id, group_info)  in &self.groups {
-            let members : Vec<PlayerId>=  group_info.players.iter()
+        let mut all_player_ids: BTreeSet<PlayerId> = self.players.keys().cloned().collect();
+        for (player_id, group_info) in &self.groups {
+            let members: Vec<PlayerId> = group_info
+                .players
+                .iter()
                 .filter_map(|member| match member.role {
                     GroupRole::Leader => None,
-                    GroupRole::Member => Some(member.pid.clone())
-                }).collect();
+                    GroupRole::Member => Some(member.pid.clone()),
+                })
+                .collect();
             all_player_ids.retain(|pid| !members.contains(pid));
             all_player_ids.remove(&player_id);
             result.push((player_id.clone(), members));

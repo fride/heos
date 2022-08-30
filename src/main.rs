@@ -1,19 +1,20 @@
 #[macro_use]
 extern crate serde_derive;
 
-use std::sync::Mutex;
+
 use std::time::Duration;
 
-use actix_web::http::header::HeaderMap;
-use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
 
-use actix_web::web::Data;
-use askama::Template;
+
+
+
+
 use pretty_env_logger::env_logger;
-use tokio::sync::oneshot;
 
-use rusty_heos::{create_api, HeosApi, HeosResult};
+
 use rusty_heos::driver::*;
+use rusty_heos::ui::ToHtml;
+use rusty_heos::{HeosResult};
 
 mod templates;
 
@@ -21,17 +22,19 @@ mod templates;
 async fn main() -> crate::HeosResult<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
-    let mut connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
+    let connection = rusty_heos::connect(Some("192.168.178.35:1255")).await?;
     // let mut connection = rusty_heos::connect::<&str>(None).await?;
 
     let driver = Driver::create(connection).await?;
-    let players = driver.get_players();
+    let _players = driver.get_players();
 
     let x = tokio::spawn(async move {
         loop {
             let players = &driver.get_players();
             for player in players {
-                println!("Player: {}", player.to_string());
+                let _m = player.visit(|pl| pl.now_playing.cloned());
+                //println!("Player: {}", player.to_string());
+                println!("Player: {}", player.to_html().into_string());
             }
             for zone in driver.get_zones() {
                 println!("Zone: {}", zone.to_string());
@@ -40,7 +43,6 @@ async fn main() -> crate::HeosResult<()> {
         }
     });
     x.await;
-
 
     // let api2 = api.clone();
     // let api3 = api.clone();

@@ -25,7 +25,10 @@ pub struct GroupInfo {
 }
 impl GroupInfo {
     pub fn has_member(&self, player_id: PlayerId) -> bool {
-        self.players.iter().find(|member| member.pid == player_id).is_some()
+        self.players
+            .iter()
+            .find(|member| member.pid == player_id)
+            .is_some()
     }
     pub fn member_ids(&self) -> Vec<PlayerId> {
         self.players.iter().map(|m| m.pid.clone()).collect()
