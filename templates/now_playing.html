@@ -1,6 +1,6 @@
 
 {% match zone.now_playing_media() %}
-{% when NowPlaying::Station with {station_name, image_url, album_id, source_id } %}
+{% when NowPlaying::Station with {station_name, image_url, album_id, artist,album,source_id } %}
 <p>{{ station_name }}</p>
 {% when NowPlaying::Song with {song, album, artist, image_url, mid, album_id, source_id } %}
 <p class="station-name">{{station_name}}</p>

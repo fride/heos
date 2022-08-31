@@ -5,7 +5,7 @@
         </div>
         <div class="zone-infos">
             <p class="zone-name long"><a href="zones/{{zone.id()}}">{{zone.name()}}</a></p>{% match zone.now_playing_media() %}
-            {% when NowPlaying::Station with {station_name, image_url, album_id, source_id } %}
+            {% when NowPlaying::Station with {station_name, image_url, album_id, album, artist, source_id } %}
             <p class="station-name long ">{{station_name}}</p>
             <p class="progress"> {{ zone.duration() }} </p>
             {% when NowPlaying::Song with {song, album, artist, image_url, mid, album_id, source_id } %}

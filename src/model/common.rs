@@ -104,6 +104,7 @@ impl PlayMode {
         }
     }
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum Repeat {
     Off,
