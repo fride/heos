@@ -1,22 +1,10 @@
 #[macro_use]
 extern crate serde_derive;
-
-
 use std::time::Duration;
-
-
-
-
-
-
 use pretty_env_logger::env_logger;
-
-
 use rusty_heos::driver::*;
 use rusty_heos::ui::ToHtml;
 use rusty_heos::{HeosResult};
-
-mod templates;
 
 #[actix_web::main]
 async fn main() -> crate::HeosResult<()> {

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use tokio::sync::{mpsc, oneshot};
 
-use crate::connection::{CommandExecutor, CommandResponse, Connection};
+use crate::connection::{CommandResponse, Connection};
 use crate::model::browse::MusicSource;
 use crate::model::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range};
 use crate::{HeosError, HeosResult};
@@ -13,16 +13,11 @@ use crate::model::player::{
 };
 use crate::model::zone::NowPlaying;
 
-mod event;
 mod parsers;
 type Cmd = (String, oneshot::Sender<HeosResult<CommandResponse>>);
 
-pub enum ApiResponse {
-    GetPlayerInfos(Vec<PlayerInfo>),
-    PlayerInfos(Vec<PlayerInfo>),
-}
 // using a channel to ensure only one command is executed at once
-// Additionally this gives us &mut functions and cheap cloneability!
+// Additionally this gives us &mut functions and cheap clone-ability!
 #[derive(Clone)]
 pub struct HeosApi(mpsc::Sender<Cmd>);
 impl HeosApi {

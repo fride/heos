@@ -1,5 +1,4 @@
 use std::net::IpAddr;
-
 use ssdp::header::{HeaderMut, Man, MX, ST};
 use ssdp::message::{Config, Multicast, SearchRequest, SearchResponse};
 use ssdp::{FieldMap, SSDPError, SSDPReceiver};
@@ -30,7 +29,13 @@ pub fn device_channel() -> mpsc::Receiver<IpAddr> {
             Ok(devices) => {
                 rt.block_on(async move {
                     for ip_addr in devices {
-                        sender.send(ip_addr).await;
+                        match sender.send(ip_addr).await {
+                            Ok(_) => {}
+                            Err(_) => {
+                                tracing::warn!("No listener for found udp heos device");
+                            }
+                        };
+
                     }
                 });
             }
