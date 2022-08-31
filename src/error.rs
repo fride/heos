@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::num::ParseIntError;
 
 use qs;
@@ -74,7 +73,7 @@ impl From<&str> for HeosError {
 }
 
 impl From<RecvError> for HeosError {
-    fn from(err: RecvError) -> Self {
+    fn from(_err: RecvError) -> Self {
         HeosError::Error {
             message: format!("{}", "failed to receive"),
         }

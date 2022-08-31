@@ -1,12 +1,12 @@
 use std::net::IpAddr;
-
-use crate::HeosError;
 use ssdp::header::{HeaderMut, Man, MX, ST};
 use ssdp::message::{Config, Multicast, SearchRequest, SearchResponse};
 use ssdp::{FieldMap, SSDPError, SSDPReceiver};
 use tokio::runtime;
 use tokio::sync::mpsc;
 use tracing::debug;
+
+use crate::HeosError;
 
 // todo this would make the entire app async. Don't know if I need it.
 pub fn device_channel() -> mpsc::Receiver<IpAddr> {
@@ -29,7 +29,13 @@ pub fn device_channel() -> mpsc::Receiver<IpAddr> {
             Ok(devices) => {
                 rt.block_on(async move {
                     for ip_addr in devices {
-                        sender.send(ip_addr).await;
+                        match sender.send(ip_addr).await {
+                            Ok(_) => {}
+                            Err(_) => {
+                                tracing::warn!("No listener for found udp heos device");
+                            }
+                        };
+
                     }
                 });
             }

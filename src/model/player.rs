@@ -176,10 +176,10 @@ pub struct PlayerMute {
     pub state: OnOrOff,
 }
 
-#[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq, Default)]
 pub struct NowPlayingProgress {
     #[serde(rename = "pid")]
     pub player_id: PlayerId,
     pub current_position: Milliseconds,
-    pub duration_in_ms: Milliseconds,
+    pub duration_in_ms: Option<Milliseconds>,
 }
