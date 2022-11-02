@@ -1,40 +1,43 @@
-use actix_web::{HttpResponse, web};
+use crate::domain::zone::Zone;
 use actix_web::http::header::ContentType;
 use actix_web::web::Path;
-use heos_api::HeosDriver;
+use actix_web::{web, HttpResponse};
 use heos_api::types::PlayerId;
+use heos_api::HeosDriver;
 use maud::html;
-use crate::domain::zone::Zone;
 
 pub struct ZoneMemberModel {
     pub id: PlayerId,
     pub name: String,
-    pub selected: bool
+    pub selected: bool,
 }
-pub async fn edit_zone_members_form(path: Path<i64>,driver: web::Data<HeosDriver>) -> HttpResponse {
+pub async fn edit_zone_members_form(
+    path: Path<i64>,
+    driver: web::Data<HeosDriver>,
+) -> HttpResponse {
     let zone_id = path.into_inner();
     let players = driver.players();
     let zones = Zone::get_zones(&driver);
     let leader = zones.iter().find(|p| p.id() == zone_id).unwrap();
-    let  members = players.iter().filter_map(|player|{
+    let members = players.iter().filter_map(|player| {
         if player.player_id == leader.id() {
             None
         } else if leader.contains_member(player.player_id) {
-            Some(ZoneMemberModel{
+            Some(ZoneMemberModel {
                 id: player.player_id,
                 name: player.name.clone(),
-                selected: true
+                selected: true,
             })
-        } else{
-            Some(ZoneMemberModel{
+        } else {
+            Some(ZoneMemberModel {
                 id: player.player_id.clone(),
                 name: player.name.clone(),
-                selected: false
+                selected: false,
             })
         }
     });
 
-    let html = html!{
+    let html = html! {
         form method="post" action=(format!("/zones/{}", zone_id)) id=(format!("zone{}", zone_id))
             hx-post=(format!("/zones/{}", zone_id))
             hx-target="#zones"

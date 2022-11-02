@@ -1,16 +1,15 @@
-use std::collections::{BTreeMap, BTreeSet};
-use heos_api::HeosDriver;
 use heos_api::types::group::{Group, GroupRole};
-use heos_api::types::{GroupId, Level, PlayerId};
 use heos_api::types::player::{HeosPlayer, NowPlayingMedia};
+use heos_api::types::{Level, PlayerId};
+use heos_api::HeosDriver;
 use serde_derive::{Deserialize, Serialize};
-
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ZoneMember {
     pub id: PlayerId,
     pub name: String,
-    pub volume: Level
+    pub volume: Level,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Zone {
@@ -24,7 +23,7 @@ impl Into<Zone> for HeosPlayer {
         Zone {
             leader: self,
             members: vec![],
-            group_volume: None
+            group_volume: None,
         }
     }
 }
@@ -34,7 +33,7 @@ impl Into<ZoneMember> for HeosPlayer {
         ZoneMember {
             id: self.player_id,
             name: self.name,
-            volume: self.volume
+            volume: self.volume,
         }
     }
 }
@@ -44,9 +43,11 @@ impl Zone {
         if self.members.is_empty() {
             self.leader.name.clone()
         } else {
-            self.members.iter().fold(self.leader.name.clone(), |mut acc, member|{
-                format!("{} + {}", acc, &member.name)
-            })
+            self.members
+                .iter()
+                .fold(self.leader.name.clone(), |acc, member| {
+                    format!("{} + {}", acc, &member.name)
+                })
         }
     }
     pub fn zone_id(&self) -> String {
@@ -66,37 +67,45 @@ impl Zone {
 }
 
 impl Zone {
-
     pub fn get_zones(driver: &HeosDriver) -> Vec<Zone> {
         let players = driver.players();
         let groups = driver.groups();
         Zone::from_players_and_groups(players, groups)
     }
 
-    fn from_players_and_groups<A : IntoIterator<Item=HeosPlayer>, B : IntoIterator<Item=Group>>(
+    fn from_players_and_groups<
+        A: IntoIterator<Item = HeosPlayer>,
+        B: IntoIterator<Item = Group>,
+    >(
         players: A,
-        groups: B
-    ) -> Vec<Zone>{
+        groups: B,
+    ) -> Vec<Zone> {
         let mut zones = vec![];
-        let mut players : BTreeMap<PlayerId, HeosPlayer> = players
+        let mut players: BTreeMap<PlayerId, HeosPlayer> = players
             .into_iter()
             .map(|player| (player.player_id, player))
             .collect();
 
-
         for group in groups {
-            if let Some(leader) = group.leader().and_then(|leader| players.remove(&leader.pid)) {
-                let members : Vec<HeosPlayer> = group.players.iter().filter_map(|member|{
-                    if member.role == GroupRole::Leader {
-                        None
-                    } else {
-                        players.remove(&member.pid)
-                    }
-                }).collect();
-                zones.push(Zone{
+            if let Some(leader) = group
+                .leader()
+                .and_then(|leader| players.remove(&leader.pid))
+            {
+                let members: Vec<HeosPlayer> = group
+                    .players
+                    .iter()
+                    .filter_map(|member| {
+                        if member.role == GroupRole::Leader {
+                            None
+                        } else {
+                            players.remove(&member.pid)
+                        }
+                    })
+                    .collect();
+                zones.push(Zone {
                     leader,
                     members: members.into_iter().map(|p| p.into()).collect(),
-                    group_volume: None
+                    group_volume: None,
                 })
             }
         }
@@ -109,7 +118,7 @@ impl Zone {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+
     use pretty_env_logger::env_logger;
 
     use super::*;

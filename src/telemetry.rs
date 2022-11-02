@@ -1,7 +1,7 @@
 use actix_web::rt::task::JoinHandle;
 use tracing::subscriber::set_global_default;
 use tracing::Subscriber;
-use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_bunyan_formatter::BunyanFormattingLayer;
 use tracing_log::LogTracer;
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
@@ -25,8 +25,8 @@ where
     let formatting_layer = BunyanFormattingLayer::new(name, sink);
     Registry::default()
         .with(env_filter)
-      //  .with(JsonStorageLayer)
-       .with(formatting_layer)
+        //  .with(JsonStorageLayer)
+        .with(formatting_layer)
 }
 
 /// Register a subscriber as global default to process span data.

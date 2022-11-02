@@ -1,10 +1,9 @@
-use actix_web::{HttpRequest, HttpResponse, web};
-use actix_web::http::header::ContentType;
-use heos_api::HeosDriver;
 use crate::views;
+use actix_web::http::header::ContentType;
+use actix_web::{web, HttpRequest, HttpResponse};
+use heos_api::HeosDriver;
 
-pub async fn list(req: HttpRequest,
-                  driver: web::Data<HeosDriver>) -> HttpResponse {
+pub async fn list(_req: HttpRequest, driver: web::Data<HeosDriver>) -> HttpResponse {
     let music_sources = driver.music_sources();
     let html = views::sources::sources_page(music_sources);
     HttpResponse::Ok()

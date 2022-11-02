@@ -1,4 +1,3 @@
-use actix_web::http::header::ContentType;
 use actix_web::HttpResponse;
 
 pub async fn main_css() -> HttpResponse {
