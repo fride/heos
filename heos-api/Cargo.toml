@@ -1,0 +1,46 @@
+[package]
+name = "heos-api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.133"
+serde_json = "1.0.74"
+serde_qs = "0.8.5"
+serde_derive = "1.0.133"
+regex = "1.5.4"
+async-stream = "0.3.2"
+itertools = "0.10.3"
+
+#logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.2.7", default-features = false, features = ["fmt", "ansi", "env-filter", "chrono", "tracing-log"] }
+pretty_env_logger = "0.4.0"
+log = "0.4.6"
+
+# Error handling
+thiserror = "1.0.21"
+anyhow = "1.0.52"
+darling = "0.14.1"
+
+[dependencies.tokio]
+version = "1.15.0"
+features = ["full"]
+
+[dependencies.tokio-stream]
+version = "0.1.8"
+
+[dependencies.tokio-util]
+version = "0.7.3"
+features = ["full"]
+
+[dependencies.async-trait]
+version = "0.1.42"
+
+[dependencies.bytes]
+version = "1"

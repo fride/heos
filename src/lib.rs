@@ -1,40 +1,17 @@
-extern crate itertools;
-#[macro_use]
-extern crate serde_derive;
-// extern crate futures;
-extern crate serde_json;
-extern crate serde_qs as qs;
+extern crate maud;
 
-use tokio::net::ToSocketAddrs;
-pub use error::*;
-use crate::connection::Connection;
+use parking_lot::Mutex;
+use std::sync::Arc;
 
-mod api;
-pub use api::HeosApi;
-use crate::driver::Driver;
+pub type Shared<A> = Arc<Mutex<A>>;
 
-pub mod connection;
-pub mod driver;
-mod error;
-pub mod model;
-pub mod ui;
-pub(crate) mod util;
-
-pub type HeosResult<T> = Result<T, HeosError>;
-
-pub async fn connect<A>(ip: Option<A>) -> HeosResult<Connection>
-where
-    A: ToSocketAddrs,
-{
-    match ip {
-        Some(a) => connection::Connection::connect(a).await,
-        None => connection::Connection::find().await,
-    }
-}
-pub async fn create_api(connection: Connection) -> HeosResult<HeosApi> {
-    Ok(HeosApi::new(connection))
+pub fn new_shared<B, A: Into<B>>(value: A) -> Shared<B> {
+    Arc::new(Mutex::new(value.into()))
 }
 
-pub async fn create_driver(connection: Connection) -> HeosResult<Driver> {
-    Driver::create(connection).await
-}
+pub mod application;
+pub mod configuration;
+pub mod domain;
+pub mod routers;
+pub mod telemetry;
+pub mod views;
