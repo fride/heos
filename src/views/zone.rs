@@ -1,18 +1,21 @@
+use crate::domain::zone::Zone;
+use crate::views::page;
 use heos_api::types::browse::MusicSource;
 use heos_api::types::player::{NowPlayingMedia, QueueEntry};
 use maud::{html, Markup};
-use crate::domain::zone::Zone;
-use crate::views::page;
 
-pub fn zone_page(zones: Vec<Zone>,
-                 music_sources: Vec<MusicSource>) -> Markup {
-    page("H E O S - Zones", "Zones".to_string(), html! {
-        div class="zones" id="zones" {
-            @for zone in &zones {
-                (zone_list_item(&zone))
+pub fn zone_page(zones: Vec<Zone>, _music_sources: Vec<MusicSource>) -> Markup {
+    page(
+        "H E O S - Zones",
+        "Zones".to_string(),
+        html! {
+            div class="zones" id="zones" {
+                @for zone in &zones {
+                    (zone_list_item(&zone))
+                }
             }
-        }
-    })
+        },
+    )
 }
 
 pub fn zone_now_playing(now_playing: &NowPlayingMedia) -> Markup {
@@ -41,7 +44,7 @@ pub fn zone_item_actions(zone: &Zone) -> Markup {
     }
 }
 
-pub fn zone_item_media_controls(zone: &Zone) -> Markup {
+pub fn zone_item_media_controls(_zone: &Zone) -> Markup {
     html! {
         div class="zone-list-item__media_control" {
             button value="backward" {
@@ -77,27 +80,30 @@ pub fn zone_list_item(zone: &Zone) -> Markup {
     }
 }
 
-pub fn zone_detail_page(zone: Zone, sources: Vec<MusicSource>, queue: Vec<QueueEntry>) -> Markup {
-    page("H E O S", "Zone".to_string(),
-         html! {
-        div.zone id="zone" {
-            div.zone_heading {
-                    h3 { (zone.name()) }
-                 }
-            div.zone__now-playing {
-            @if let Some(now_playing) = zone.now_playing() {
-                    (zone_now_playing(now_playing))
-                } @else {
-                    div { ("Nothing here to hear")}
+pub fn zone_detail_page(zone: Zone, _sources: Vec<MusicSource>, queue: Vec<QueueEntry>) -> Markup {
+    page(
+        "H E O S",
+        "Zone".to_string(),
+        html! {
+            div.zone id="zone" {
+                div.zone_heading {
+                        h3 { (zone.name()) }
+                     }
+                div.zone__now-playing {
+                @if let Some(now_playing) = zone.now_playing() {
+                        (zone_now_playing(now_playing))
+                    } @else {
+                        div { ("Nothing here to hear")}
+                    }
                 }
-            }
-            div.queue {
-                @for entry in queue {
-                    div {
-                       (entry.song)
+                div.queue {
+                    @for entry in queue {
+                        div {
+                           (entry.song)
+                        }
                     }
                 }
             }
-        }
-    })
+        },
+    )
 }

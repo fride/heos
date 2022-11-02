@@ -1,8 +1,8 @@
 mod health_check;
 mod home;
-pub(crate) mod zone;
 mod style;
-use maud::{html, Markup, DOCTYPE, Render};
+pub(crate) mod zone;
+
 pub use health_check::*;
 pub use home::*;
 pub use style::*;

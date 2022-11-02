@@ -1,16 +1,16 @@
 use actix_web::dev::Server;
 use actix_web::web::Data;
-use actix_web::{web, App, HttpServer, guard};
+use actix_web::{guard, web, App, HttpServer};
 use heos_api::HeosDriver;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 // TODO NOT The Tokio one!?
 use crate::configuration::Settings;
-use crate::routers::{health_check, home, main_css, zone::edit_zone_members_form,
-                     zone::list as list_zones,
-                     zone::details,
-                     zone::new as new_zone};
 use crate::routers::music_source;
+use crate::routers::{
+    health_check, home, main_css, zone::details, zone::edit_zone_members_form,
+    zone::list as list_zones, zone::new as new_zone,
+};
 
 pub struct Application {
     port: u16,
@@ -29,7 +29,11 @@ impl Application {
         let driver = heos_api::HeosDriver::new(heos_address).await?;
         let port = listener.local_addr().unwrap().port();
         let server = run(listener, configuration.application.base_url, driver.clone()).await?;
-        Ok(Self { port, server, driver })
+        Ok(Self {
+            port,
+            server,
+            driver,
+        })
     }
 
     pub fn port(&self) -> u16 {
@@ -58,22 +62,21 @@ async fn run(
                 web::resource("/zones/{zone_id}/edit_members")
                     .name("edit_members")
                     .guard(guard::Get())
-                    .to(edit_zone_members_form)
+                    .to(edit_zone_members_form),
             )
             .service(
                 web::resource("/zones/{zone_id}")
                     .name("new_zone")
                     .guard(guard::Post())
-                    .to(new_zone)
+                    .to(new_zone),
             )
             //.route("/zones/{zone_id}/edit_members", web::get().to(edit_zone_members_form))
-            .route("/static/style.css", web::get()
-                .to(main_css))
+            .route("/static/style.css", web::get().to(main_css))
             .route("/health_check", web::get().to(health_check))
             .app_data(base_url.clone())
             .app_data(driver.clone())
     })
-        .listen(listener)?
-        .run();
+    .listen(listener)?
+    .run();
     Ok(server)
 }

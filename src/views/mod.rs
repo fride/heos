@@ -1,5 +1,4 @@
 use maud::{html, Markup, DOCTYPE};
-use serde_json::to_string;
 
 pub mod zone;
 
@@ -25,7 +24,11 @@ fn header(page_title: &str) -> Markup {
 pub fn page(title: &str, name: String, contents: Markup) -> Markup {
     let tabs = vec![
         ("Zones".to_string(), "/zones".to_string(), name == "Zones"),
-        ("Quellen".to_string(), "/music_sources".to_string(), name == "Music Sources"),
+        (
+            "Quellen".to_string(),
+            "/music_sources".to_string(),
+            name == "Music Sources",
+        ),
     ];
     html! {
         (DOCTYPE)
@@ -45,7 +48,7 @@ pub fn page(title: &str, name: String, contents: Markup) -> Markup {
     }
 }
 
-pub fn render_tabs(tabs: Vec<(String,String, bool)>) -> Markup {
+pub fn render_tabs(tabs: Vec<(String, String, bool)>) -> Markup {
     html! {
         div class="tab-list" {
             @for (name, link, selected) in tabs {
