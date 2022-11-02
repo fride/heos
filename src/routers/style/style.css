@@ -1,0 +1,153 @@
+/*
+ Notes/ ideas links. .....
+  https://getbem.com/naming/
+    Colors:
+    #74747473
+  also vars! WTF! :)
+ */
+:root {
+    /* from https://hookagency.com/blog/website-color-schemes-2020/ */
+    --IceCold: #a0d2eb;
+    --Freeze-Purple: #e5eaf5;
+    --MediumPurple: #d0bdf4;
+    --PurplePain: #8458B3;
+    --HeavyPurple: #494d5f;
+    --White: #f5f5f5;
+
+    --First-Color: #d9dad7;
+    --Second-Color: #c24d2c;
+    --Third-Color: #3e4a61;
+    --Fourth-Color: #1a2639;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* font-family: "Bebas Neue", cursive; */
+    font-family: "Figtree", sans-serif;
+    width: 100%;
+    color: var(--First-Color);
+    background-image: linear-gradient(45deg, var(--Third-Color), var(--Fourth-Color));
+    min-height: 100vh;
+}
+.main {
+    display: flex;
+    flex-flow: row;
+    min-width: 20rem;
+    max-width: 50rem;
+}
+.zones {
+    display: flex;
+    flex-flow: column;
+}
+.zone-list-item {
+    display: grid;
+    max-width: 30em;
+    min-width: 20em;
+    grid-template-columns: 3fr 3em;
+    grid-auto-rows: 2em 4em 2em;
+    /*border-left: 1px solid black;*/
+    /*border-top: 1px solid black;*/
+    margin-bottom: 1em;
+    margin-left: 4px;
+    margin-right: 4px;
+    padding: 8px;
+    background-color: var(--First-Color);
+    background: var(--Fourth-Color);
+    border-radius: 16px;
+    box-shadow: none;
+    transform-origin: center;
+    transition: all 0.4s ease-in-out;
+    overflow: hidden;
+    grid-template-areas:
+            "a a b"
+            "c c c"
+            "e e e";
+}
+.zone-list-item:has(:hover, :focus) {
+    --img-scale: 1.1;
+    --title-color: #28666e;
+    --link-icon-translate: 0;
+    --link-icon-opacity: 1;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+}
+
+.zone-list-item a {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--Second-Color);
+}
+
+.zone-list-item__heading {
+    grid-area: a;
+    font-variant: all-petite-caps;
+    justify-self: left;
+}
+.zone-list-item__now-playing {
+    grid-area: c;
+    display: grid;
+    grid-template-columns: 80px auto;
+    grid-auto-rows: 1.2em 1.2em 1em;
+    grid-template-areas:
+        "a b"
+        "a c"
+        "a d";
+}
+
+.zone-list-item__now-playing__icon {
+    grid-area: a;
+    align-self: center;
+    justify-self: center;
+}
+.zone-list-item__now-playing__song {
+    grid-area: b;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+.zone-list-item__now-playing__artist {
+    grid-area: c;
+    margin-bottom: 4px;
+}
+.zone-list-item__now-playing__album {
+    grid-area: d;
+}
+.zone-list-item__media_control {
+    grid-area: e;
+    color: var(--Second-Color);
+}
+.zone-list-item__actions {
+    grid-area: b;
+}
+
+.play {
+    color: var(--Second-Color);
+    background-color: var(--Third-Color);
+}
+.play::after {
+    content: "\f04b";
+    color: var(--Second-Color);
+    background-color: var(--Third-Color);
+}
+
+.tab-content {
+    padding: 1em;
+}
+.tab-list {
+    border-bottom: solid 3px var(--Second-Color);
+}
+.tab-list a {
+    text-decoration: none;
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: var(--First-Color);
+}
+.tab-list a.selected {
+    background-color: var(--Second-Color);
+}
+/*
+https://fontawesome.com/v5/cheatsheet
+ */
