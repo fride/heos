@@ -9,4 +9,4 @@ The Heos API is a bit strange. Some informations can only be retrieved via the "
 - The driver loads all players and groups
 - it loads the players and groups details
 - it registeres for change events
-- 
+- http://samherbert.net/svg-loaders/
