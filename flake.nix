@@ -10,7 +10,9 @@
         let
           overlays = [ (import rust-overlay) ];
           pkgs = import nixpkgs { inherit system overlays; };
-          rustVersion = pkgs.rust-bin.stable.latest.default;
+          #rustVersion = pkgs.rust-bin.stable.latest.default; # this won't work?
+          # See https://github.com/oxalica/rust-overlay
+          rustVersion = pkgs.rust-bin.nightly."2022-08-08".default; # this won't work?
 
           rustPlatform = pkgs.makeRustPlatform {
             cargo = rustVersion;
@@ -23,14 +25,19 @@
             version = "0.1.0";
             src = ./.; # the folder with the cargo.toml
 
-            cargoLock.lockFile = ./Cargo.lock;
+              cargoLock = {
+                lockFile = ./Cargo.lock;
+              };
           };
 
         in {
           defaultPackage = myRustBuild;
+          #
+          # TODO this is a bash. I don't want a bash!
+          #
           devShell = pkgs.mkShell {
             buildInputs =
-              [ (rustVersion.override { extensions = [ "rust-src" ]; }) ];
+              [ pkgs.fish (rustVersion.override { extensions = [ "rust-src" ]; }) ];
           };
         });
 }
