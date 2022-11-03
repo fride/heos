@@ -3,6 +3,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    naersk.url = "github:nix-community/naersk";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
   outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
@@ -19,16 +20,23 @@
             rustc = rustVersion;
           };
 
-          myRustBuild = rustPlatform.buildRustPackage {
-            pname = "heosd"; # make this what ever your cargo.toml package.name is
-            version = "0.1.0";
-            src = ./.; # the folder with the cargo.toml
-            cargoLock = {
-                lockFile = ./Cargo.lock;
+#          myRustBuild = rustPlatform.buildRustPackage {
+#            pname = "heosd"; # make this what ever your cargo.toml package.name is
+#            version = "0.1.0";
+#            src = ./.; # the folder with the cargo.toml
+#            cargoLock = {
+#                lockFile = ./Cargo.lock;
+#            };
+#            nativeBuildInputs = [ pkgs.pkg-config ];
+#          };
+            # Use naersk to build the rust app.
+            # see https://www.tweag.io/blog/2022-09-22-rust-nix/
+            app = naerskLib.buildPackage {
+                name = "heosd";
+                src = ./.;
+                cargoBuildOptions = x: x ++ [ "-p" "app" ];
+                nativeBuildInputs = [ pkgs.pkg-config ];
             };
-            nativeBuildInputs = [ pkgs.pkg-config ];
-          };
-
         in {
           defaultPackage = myRustBuild;
           #
