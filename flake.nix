@@ -20,14 +20,13 @@
           };
 
           myRustBuild = rustPlatform.buildRustPackage {
-            pname =
-              "heosd"; # make this what ever your cargo.toml package.name is
+            pname = "heosd"; # make this what ever your cargo.toml package.name is
             version = "0.1.0";
             src = ./.; # the folder with the cargo.toml
-
-              cargoLock = {
+            cargoLock = {
                 lockFile = ./Cargo.lock;
-              };
+            };
+            nativeBuildInputs = [ pkgs.pkg-config ];
           };
 
         in {
