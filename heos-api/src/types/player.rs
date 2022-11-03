@@ -213,14 +213,13 @@ impl HeosPlayer {
         serde_json::to_value(self).unwrap()
     }
 }
-use std::fmt::Error as FmtError;
 use serde_json::Value;
 
 impl Display for HeosPlayer {
 
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         serde_json::to_string_pretty(self)
-            .map_err(|jserr| std::fmt::Error)
+            .map_err(|_| std::fmt::Error)
             .and_then(|s| write!(f,"{}", s))
     }
 }

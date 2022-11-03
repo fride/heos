@@ -7,24 +7,15 @@ use bytes::{Buf, BytesMut};
 use serde_json::Value;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tokio_stream::Stream;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 pub use frame::*;
 
-use crate::error::{HeosError};
-use crate::types::event::HeosEvent;
 use crate::types::HeosErrorCode;
 use crate::HeosResult;
 
 // mod discover;
 mod frame;
-
-#[derive(Clone, Debug)]
-pub enum CommandResult {
-    Success,
-    Fail,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommandResponse {
@@ -98,7 +89,7 @@ impl Connection {
         &self.peer_addr
     }
 
-    pub async fn try_clone(&mut self) -> crate::HeosResult<Self> {
+    pub async fn try_clone(&mut self) -> HeosResult<Self> {
         let addr = self
             .stream
             .get_ref()
@@ -273,8 +264,8 @@ impl Connection {
             //
             // We do not want to return `Err` from here as this "error" is an
             // expected runtime condition.
-            #[warn(non_snake_case)]
-            Err(_Incomplete) => Ok(None),
+            #[allow(non_snake_case)]
+            Err(_) => Ok(None),
             // An error was encountered while parsing the frame. The components.connection
             // is now in an invalid state. Returning `Err` from here will result
             // in the components.connection being closed.

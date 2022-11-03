@@ -6,7 +6,7 @@
     naersk.url = "github:nix-community/naersk";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
-  outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, naersk, ... }:
       flake-utils.lib.eachDefaultSystem (system:
         let
           overlays = [ (import rust-overlay) ];
@@ -20,25 +20,19 @@
             rustc = rustVersion;
           };
 
-#          myRustBuild = rustPlatform.buildRustPackage {
-#            pname = "heosd"; # make this what ever your cargo.toml package.name is
-#            version = "0.1.0";
-#            src = ./.; # the folder with the cargo.toml
-#            cargoLock = {
-#                lockFile = ./Cargo.lock;
-#            };
-#            nativeBuildInputs = [ pkgs.pkg-config ];
-#          };
             # Use naersk to build the rust app.
             # see https://www.tweag.io/blog/2022-09-22-rust-nix/
-            app = naerskLib.buildPackage {
+
+            naerskLib = pkgs.callPackage naersk {};
+
+            heosd = naerskLib.buildPackage {
                 name = "heosd";
                 src = ./.;
                 cargoBuildOptions = x: x ++ [ "-p" "app" ];
                 nativeBuildInputs = [ pkgs.pkg-config ];
             };
         in {
-          defaultPackage = myRustBuild;
+          defaultPackage = heosd;
           #
           # TODO this is a bash. I don't want a bash!
           #
