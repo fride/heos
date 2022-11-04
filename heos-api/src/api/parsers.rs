@@ -1,20 +1,16 @@
 use std::convert::TryFrom;
-use std::iter::Scan;
-
 use anyhow::Context;
 use qs;
 use serde_json::Value;
 
 use crate::connection::{CommandResponse, EventResponse};
 use crate::error::HeosError;
-use crate::macros::*;
 use crate::types::browse::*;
 use crate::types::event::*;
 use crate::types::group::{CreateGroupResponse, DeleteGroupResponse, GroupInfo, GroupVolume};
 use crate::types::player::*;
 use crate::types::system::*;
 use crate::types::*;
-use crate::HeosResult;
 
 jason_parser!(Vec<PlayerInfo>);
 jason_parser!(PlayerInfo);
@@ -35,14 +31,14 @@ qs_parser!(DeleteGroupResponse);
 impl TryFrom<CommandResponse> for Success {
     type Error = HeosError;
 
-    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+    fn try_from(_: CommandResponse) -> Result<Self, Self::Error> {
         Ok(Success)
     }
 }
 
 // event parsing!
 pub fn response_to_event(response: EventResponse) -> crate::HeosResult<HeosEvent> {
-    use anyhow::Context;
+
     let json = qs_to_json(&response.event_name, &response.message)?;
     let event: HeosEvent = serde_json::from_value(json).with_context(|| {
         format!(

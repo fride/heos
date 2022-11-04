@@ -1,36 +1,5 @@
 // got docus from:https://fromherotozero.dev/blog/introduction-to-rust-macros/
 
-macro_rules! cmd {
-
-    ($name:ident :: $send_name:literal  -> $returns:ty ) => {
-        pub struct $name;
-        impl HeosCommand for $name {
-            type CommandResponseType = $returns;
-            fn payload(&self) -> String {
-                $send_name.to_string()
-            }
-        }
-    };
-
-    ($name:ident :: $send_name:literal ($($param_name:ident : $param_type:ty ), + ) -> $returns:ty ) => {
-        pub struct $name {
-            $(
-                pub  $param_name : $param_type,
-            )*
-        }
-        impl HeosCommand for $name {
-            type CommandResponseType = $returns;
-            fn payload(&self) -> String {
-                let mut temp_vec = Vec::new();
-                $(
-                    temp_vec.push(format!("{}={}", stringify!($param_name), self.$param_name));
-                )*
-                format!("{}?{}", $send_name.to_string(), temp_vec.join("&"))
-            }
-        }
-    };
-}
-
 macro_rules! jason_parser {
     ($t:ty) => {
         impl TryFrom<CommandResponse> for $t {

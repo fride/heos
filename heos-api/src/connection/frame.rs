@@ -133,7 +133,7 @@ mod parsers {
             13 => HeosErrorCode::ProcessingPreviousCommand,
             14 => HeosErrorCode::MediaCantBePlayed,
             15 => HeosErrorCode::OptionNotSupported,
-            num => HeosErrorCode::Unknown,
+            _  => HeosErrorCode::Unknown,
         }
     }
 

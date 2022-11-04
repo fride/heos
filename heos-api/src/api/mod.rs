@@ -9,7 +9,7 @@ use parsers::*;
 
 use crate::connection::{CommandResponse, Connection};
 use crate::types::browse::MusicSource;
-use crate::types::group::{CreateGroupResponse, DeleteGroupResponse, GroupInfo, GroupVolume};
+use crate::types::group::{GroupInfo, GroupVolume};
 use crate::types::player::{
     NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState,
     PlayerVolume, QueueEntry,

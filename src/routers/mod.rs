@@ -8,3 +8,5 @@ pub use home::*;
 pub use style::*;
 
 pub(crate) mod music_source;
+
+pub mod api;

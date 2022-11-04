@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
-use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::ToSocketAddrs;
-use tracing::{debug, error};
+use tracing::{debug};
 use crate::{HeosApi, HeosError, HeosResult};
-use crate::connection::Connection;
 use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
 use crate::types::{GroupId, PlayerId, Range, SourceId};
 use crate::types::browse::MusicSource;

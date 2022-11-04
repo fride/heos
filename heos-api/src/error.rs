@@ -1,11 +1,4 @@
-use std::fmt::{Display, Formatter};
-use std::num::ParseIntError;
-
-use qs;
-use thiserror::Error;
-use tokio::sync::oneshot::error::RecvError;
 use crate::types::HeosErrorCode;
-
 
 #[derive(thiserror::Error)]
 pub enum HeosError {
