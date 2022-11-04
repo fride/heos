@@ -125,13 +125,13 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     pub async fn zones() {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-        let driver = HeosDriver::new("192.168.178.35:1255").await.unwrap();
-        driver.init().await.unwrap();
-
-        let zones = Zone::get_zones(&driver);
-        println!("{:?}", driver.players());
-        println!("{:?}", driver.groups());
-        println!("{:?}", zones);
+        // env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+        // let driver = HeosDriver::new("192.168.178.35:1255").await.unwrap();
+        // driver.init().await.unwrap();
+        //
+        // let zones = Zone::get_zones(&driver);
+        // println!("{:?}", driver.players());
+        // println!("{:?}", driver.groups());
+        // println!("{:?}", zones);
     }
 }
