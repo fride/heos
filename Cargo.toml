@@ -15,11 +15,14 @@ name = "heosd"
 [dependencies]
 
 heos-api = {path = "heos-api"}
+rust-hall = {path = "rust-hall"}
+heos-axum = {path = "heos-axum"}
 
 #Web
 actix-web = "4"
 actix-web-lab = "0.18"
 actix-files = "0.6.2"
+mime = "0.3.16"
 
 # async and stuff
 parking_lot = "0.12"

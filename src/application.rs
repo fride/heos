@@ -1,15 +1,15 @@
 use actix_web::dev::Server;
 use actix_web::web::Data;
-use actix_web::{guard, web, App, HttpServer};
+use actix_web::{guard, web, App, HttpServer, Scope};
 use heos_api::HeosDriver;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 // TODO NOT The Tokio one!?
 use crate::configuration::Settings;
-use crate::routers::music_source;
+use crate::routers::{api, music_source};
 use crate::routers::{
     health_check, home, main_css, zone::details, zone::edit_zone_members_form,
-    zone::list as list_zones, zone::new as new_zone,
+    zone::list as list_zones, zone::new as new_zone
 };
 
 pub struct Application {
@@ -56,7 +56,12 @@ async fn run(
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/zones", web::get().to(list_zones))
-            .route("/zones/{zone_id}", web::get().to(details))
+            .service(api::routes())
+            .service(
+                web::resource("/zones/{zone_id}")
+                    .name("view_zone")
+                    .route(web::get().to(details)),
+            )
             .route("/music_sources", web::get().to(music_source::list))
             .service(
                 web::resource("/zones/{zone_id}/edit_members")
@@ -71,7 +76,7 @@ async fn run(
                     .to(new_zone),
             )
             //.route("/zones/{zone_id}/edit_members", web::get().to(edit_zone_members_form))
-            .route("/static/style.css", web::get().to(main_css))
+            .route("/statics/style.scss", web::get().to(main_css))
             .route("/health_check", web::get().to(health_check))
             .app_data(base_url.clone())
             .app_data(driver.clone())

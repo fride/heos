@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use tokio::net::ToSocketAddrs;
-use tracing::{debug};
+use tracing::{debug, Value};
 use crate::{HeosApi, HeosError, HeosResult};
 use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
-use crate::types::{GroupId, PlayerId, Range, SourceId};
-use crate::types::browse::MusicSource;
+use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
+use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia};
 use crate::types::event::HeosEvent;
 use crate::types::group::Group;
+use crate::types::system::AccountState;
 
 #[derive(Default, Debug)]
 struct DriverState {
@@ -67,6 +68,10 @@ impl HeosDriver {
         }
         Ok(())
     }
+    pub async fn login(&self, un: String, pw: String) -> HeosResult<AccountState>{
+        self.api.login(un,pw).await
+    }
+
     pub fn players(&self) -> Vec<HeosPlayer> {
         let state = self.state.lock().unwrap();
         let players = state.players.values().cloned().collect();
@@ -100,6 +105,13 @@ impl HeosDriver {
         Ok(())
     }
 
+    pub async fn browse(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>>{
+        self.api.browse(sid).await
+    }
+    pub async fn browse_music_containers(&self, sid: &SourceId, container_id: &ContainerId, range: &Range) -> HeosResult<Vec<BrowsableMedia>>{
+        self.api.browse_music_containers(sid, container_id, range).await
+    }
+
     async fn start_event_listener(&self) -> HeosResult<()> {
         let mut events = self.api.events().await?;
         let event_api = self.api.clone();
@@ -111,6 +123,8 @@ impl HeosDriver {
         });
         Ok(())
     }
+
+
     async fn handle_event(event: HeosEvent,
                           connection: &HeosApi,
                           driver_state: &Arc<Mutex<DriverState>>) -> HeosResult<()> {

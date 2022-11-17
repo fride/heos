@@ -105,7 +105,7 @@ impl Zone {
                 zones.push(Zone {
                     leader,
                     members: members.into_iter().map(|p| p.into()).collect(),
-                    group_volume: None,
+                    group_volume: Some(group.volume),
                 })
             }
         }

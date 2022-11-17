@@ -1,0 +1,28 @@
+[package]
+name = "heos-axum"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+
+heos-api = {path = "../heos-api"}
+
+serde = { version = "1.0.147", features = ["derive"] }
+
+tokio = { version = "1.21.2", default-features = false, features = ["rt-multi-thread", "macros"] }
+axum = { version = "0.5.17", features = ["headers", "tower-log"] }
+maud = {version = "0.24.0", features =["axum"] }
+
+env_logger = "0.9.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
+headers = "0.3.8"
+mime = "0.3"
+
+#rust-hall = {path = "../rust-hall"}
+
+anyhow = "1.0.66"
+dotenv = "0.15.0"

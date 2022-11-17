@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use anyhow::Context;
 use qs;
@@ -17,6 +18,8 @@ jason_parser!(PlayerInfo);
 jason_parser!(RegisteredForChangeEvents);
 jason_parser!(Vec<MusicSource>);
 jason_parser!(Vec<GroupInfo>);
+jason_parser!(Vec<BrowsableMedia>);
+jason_parser!(Vec<BroseSourceItem>);
 jason_parser!(Vec<QueueEntry>);
 json_option_parser!(NowPlayingMedia);
 
@@ -36,6 +39,19 @@ impl TryFrom<CommandResponse> for Success {
     }
 }
 
+impl TryFrom<CommandResponse> for AccountState {
+    type Error = HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let mut params: BTreeMap<String,String> = qs::from_str(&value.message)
+            .with_context(|| format!("failed to parse response as login: {}", value.message))?;
+        if let Some(un) = params.remove("un") {
+            Ok(AccountState::SignedIn(un))
+        } else {
+            Ok(AccountState::SignedOut)
+        }
+    }
+}
 // event parsing!
 pub fn response_to_event(response: EventResponse) -> crate::HeosResult<HeosEvent> {
 
@@ -80,6 +96,7 @@ fn qs_to_json(event_name: &str, message: &str) -> crate::HeosResult<serde_json::
 #[cfg(test)]
 mod test {
     use serde_json::json;
+    use crate::connection::Frame;
     use super::*;
 
     #[test]
@@ -91,5 +108,57 @@ mod test {
             options: Default::default(),
         };
         let play_mode: PlayerPlayMode = response.try_into().unwrap();
+    }
+
+    #[test]
+    pub fn test_various_browse_responses() {
+        let heos_json_response = json!(
+            {
+              "heos": {
+                "command": "browse/browse",
+                "result": "success",
+                "message": "sid=-1428708007&returned=1&count=1"
+              },
+              "payload": [
+                {
+                  "container": "no",
+                  "mid": "inputs/aux_in_1",
+                  "type": "station",
+                  "playable": "yes",
+                  "name": "schöne Box - AUX In",
+                  "image_url": ""
+                },
+                {
+                    "name": "AVM FRITZ!Mediaserver",
+                    "image_uri": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_servers.png",
+                    "image_url": "https://production.ws.skyegloup.com:443/media/images/service/logos/musicsource_logo_servers.png",
+                    "type": "heos_server",
+                    "sid": 1113840301
+                },
+                {
+                  "container": "yes",
+                  "type": "container",
+                  "cid": "4:cont1:20:0:0:",
+                  "playable": "no",
+                  "name": "Musik",
+                  "image_url": ""
+                },
+              ]
+        });
+        let frame : Frame =  Frame::from_json(heos_json_response).unwrap();
+        if let Frame::Response(command_response) = frame {
+            // let parsed_response :Vec<BroseSourceItem> = command_response.try_into().unwrap();
+            // match parsed_response[0] {
+            //     BroseSourceItem::HeosServiceOrServer(heos) => {
+            //         assert_eq!(heos.)
+            //     }
+            //     BroseSourceItem::BrowsableMedia(_) => {}
+            // }
+            // assert_eq!(parsed_response[0], "inputs/aux_in_1");
+            // assert_eq!(parsed_response[1].id(), "1113840301");
+            // assert_eq!(parsed_response[2].id(), "4:cont1:20:0:0:");
+        } else {
+            panic!("NOT THE EXPECTED RESULTS")
+        }
     }
 }

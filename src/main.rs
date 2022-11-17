@@ -1,7 +1,9 @@
 use heosd::application::Application;
 use heosd::configuration::get_configuration;
 use heosd::telemetry::{get_subscriber, init_subscriber};
+use std::cell::RefCell;
 use std::fmt::{Debug, Display};
+use std::ops::{Add, Mul};
 use tokio::task::JoinError;
 
 #[tokio::main]
