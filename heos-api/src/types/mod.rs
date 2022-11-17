@@ -32,21 +32,21 @@ impl Range {
         if self.start == 0 {
             None
         } else if self.length() > self.start {
-            Some(Range{
+            Some(Range {
                 start: self.start - self.length(),
-                end: self.end
+                end: self.end,
             })
         } else {
-            Some(Range{
+            Some(Range {
                 start: 0,
-                end: self.end
+                end: self.end,
             })
         }
     }
     pub fn next(&self) -> Self {
         Range {
             start: self.end,
-            end: self.end + self.length()
+            end: self.end + self.length(),
         }
     }
     pub fn as_query_str(&self) -> String {
@@ -186,7 +186,6 @@ impl fmt::Display for Shuffle {
         )
     }
 }
-
 
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum HeosErrorCode {

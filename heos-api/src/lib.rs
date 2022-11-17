@@ -21,5 +21,3 @@ pub use api::HeosApi;
 mod driver;
 
 pub use driver::HeosDriver;
-
-

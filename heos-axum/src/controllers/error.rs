@@ -1,7 +1,7 @@
-use std::io;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use heos_api::error::HeosError;
+use std::io;
 
 pub async fn code_404() -> impl IntoResponse {
     error_response(
@@ -10,10 +10,7 @@ pub async fn code_404() -> impl IntoResponse {
     )
 }
 
-fn error_response(
-    status_code: StatusCode,
-    message: &str,
-) -> impl IntoResponse + '_ {
+fn error_response(status_code: StatusCode, message: &str) -> impl IntoResponse + '_ {
     (status_code, format!("{}", message))
 }
 

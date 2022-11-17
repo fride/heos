@@ -1,6 +1,6 @@
-use serde::Deserialize;
-use crate::types::{ContainerId, MediaId, Range, YesOrNo};
 use super::SourceId;
+use crate::types::{ContainerId, MediaId, Range, YesOrNo};
+use serde::Deserialize;
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct MusicSource {
@@ -16,8 +16,8 @@ pub struct MusicSource {
 }
 
 pub fn bool_stringly_typed<'de, D>(deserializer: D) -> Result<bool, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+where
+    D: serde::Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
     if s == "true" {
@@ -33,7 +33,7 @@ pub struct HeosService {
     pub sid: SourceId,
     #[serde(rename = "type")]
     pub server_type: String,
-    pub image_url: String
+    pub image_url: String,
 }
 
 // browse source can return a lot of different types, for whatever reason!
@@ -41,9 +41,8 @@ pub struct HeosService {
 #[serde(untagged)]
 pub enum BroseSourceItem {
     HeosService(HeosService),
-    BrowsableMedia(BrowsableMedia)
+    BrowsableMedia(BrowsableMedia),
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MediaType {
@@ -73,9 +72,9 @@ pub struct BrowsableMedia {
     pub playable: YesOrNo,
     pub image_url: String,
     pub name: String,
-    pub artist : Option<String>,
-    pub album : Option<String>,
-    pub mid : Option<MediaId>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub mid: Option<MediaId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -85,6 +84,5 @@ pub struct BrowseMusicContainerResponse {
     pub range: Range,
     pub count: usize,
     pub returned: usize,
-    pub items: Vec<BrowsableMedia>
-    //sid=10&cid=My Music-Tracks&range=0,100&returned=50&count=776
+    pub items: Vec<BrowsableMedia>, //sid=10&cid=My Music-Tracks&range=0,100&returned=50&count=776
 }

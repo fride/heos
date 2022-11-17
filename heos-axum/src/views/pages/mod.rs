@@ -20,4 +20,3 @@ pub fn page(contents: Markup) -> Markup {
         }
     })
 }
-

@@ -14,10 +14,9 @@ pub mod axum_ructe;
 ///
 /// [`clap`]: https://github.com/clap-rs/clap/
 pub mod config;
-pub mod views;
 pub mod controllers;
 pub mod error;
-
+pub mod views;
 
 #[derive(Clone)]
 pub struct ApiContext {

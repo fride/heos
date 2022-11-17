@@ -1,4 +1,4 @@
 pub mod pages;
 
-pub mod sources;
 pub mod browse;
+pub mod sources;

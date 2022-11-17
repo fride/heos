@@ -61,9 +61,8 @@ fn get_line<'a>(src: &mut Cursor<&'a [u8]>) -> Result<&'a [u8], Incomplete> {
 }
 
 mod parsers {
-    use crate::types::HeosErrorCode;
     use crate::error::HeosError::InvalidCommand;
-
+    use crate::types::HeosErrorCode;
 
     use super::*;
 
@@ -136,7 +135,7 @@ mod parsers {
             13 => HeosErrorCode::ProcessingPreviousCommand,
             14 => HeosErrorCode::MediaCantBePlayed,
             15 => HeosErrorCode::OptionNotSupported,
-            _  => HeosErrorCode::Unknown,
+            _ => HeosErrorCode::Unknown,
         }
     }
 

@@ -105,13 +105,13 @@ pub struct GroupMute {
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
 pub struct SetGroup {
     pub leader: PlayerId,
-    pub member: Vec<PlayerId>
+    pub member: Vec<PlayerId>,
 }
 impl SetGroup {
     pub fn delete_group(leader: PlayerId) -> Self {
         Self {
             leader,
-            member: vec![]
+            member: vec![],
         }
     }
 }
@@ -140,4 +140,3 @@ impl Group {
         None
     }
 }
-

@@ -2,9 +2,9 @@ use std::collections::BTreeMap;
 use std::fmt::{format, Display};
 use std::task::Context;
 
+use serde::de::Error;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use serde::de::Error;
 
 #[derive(Clone, Debug)]
 pub struct HalList<A> {
@@ -12,10 +12,12 @@ pub struct HalList<A> {
 }
 
 impl<A> HalList<A>
-    where A: Sized + Clone, {
+where
+    A: Sized + Clone,
+{
     pub fn new() -> Self {
         Self {
-            contents: Vec::new()
+            contents: Vec::new(),
         }
     }
     pub fn with(mut self, value: A) -> Self {
@@ -29,17 +31,18 @@ impl<A> HalList<A>
 
 impl<A> Into<HalList<A>> for Vec<A> {
     fn into(self) -> HalList<A> {
-        HalList {
-            contents: self
-        }
+        HalList { contents: self }
     }
 }
 
 impl<T> serde::Serialize for HalList<T>
-    where
-        T: serde::Serialize + Clone,
+where
+    T: serde::Serialize + Clone,
 {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
         if self.contents.is_empty() {
             ().serialize(serializer)
         } else if self.contents.len() == 1 {
@@ -51,10 +54,13 @@ impl<T> serde::Serialize for HalList<T>
 }
 
 impl<'de, T> serde::Deserialize<'de> for HalList<T>
-    where
-            for<'d> T: serde::Deserialize<'d> + Clone,
+where
+    for<'d> T: serde::Deserialize<'d> + Clone,
 {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
         let value: Value = serde::Deserialize::deserialize(deserializer)?;
         if value.is_array() {
             let values: Vec<T> = serde_json::from_value(value)
@@ -85,12 +91,15 @@ impl HalResource {
             values: BTreeMap::default(),
             links: BTreeMap::default(),
             nested: BTreeMap::default(),
-        }.add_link("self", link)
+        }
+        .add_link("self", link)
     }
 
     // adds the objects properties.
     pub fn add_object<V>(mut self, value: V) -> Self
-        where V: serde::Serialize {
+    where
+        V: serde::Serialize,
+    {
         let value = serde_json::to_value(value).unwrap();
         if let Value::Object(values) = value {
             for (k, v) in values {
@@ -101,35 +110,45 @@ impl HalResource {
     }
 
     pub fn add_state<K, V>(mut self, name: K, value: V) -> Self
-        where K: Display,
-              V: serde::Serialize {
+    where
+        K: Display,
+        V: serde::Serialize,
+    {
         let value = serde_json::to_value(value).unwrap();
         self.values.insert(name.to_string(), value);
         self
     }
 
     pub fn add_link<C, D>(mut self, name: C, link: D) -> Self
-        where
-            C: Display,
-            D: Into<Link>,
+    where
+        C: Display,
+        D: Into<Link>,
     {
-        let mut link_list = self.links.entry(format!("{}", name))
+        let mut link_list = self
+            .links
+            .entry(format!("{}", name))
             .or_insert(HalList::new());
         link_list.push(link.into());
         self
     }
 
     pub fn with_embedded<A: Into<HalResource>, D: Display>(mut self, name: D, value: A) -> Self {
-        let mut resources = self.nested.entry(name.to_string())
+        let mut resources = self
+            .nested
+            .entry(name.to_string())
             .or_insert(HalList::new());
         resources.push(value.into());
         self
     }
-    pub fn with_resources<D: Display, A: IntoIterator<Item=HalResource>>(mut self, name: D, resources: A) -> Self {
+    pub fn with_resources<D: Display, A: IntoIterator<Item = HalResource>>(
+        mut self,
+        name: D,
+        resources: A,
+    ) -> Self {
         let mut name = name.to_string();
-        resources.into_iter()
-            .fold(self, |s, resource|
-                s.with_embedded(name.clone(), resource))
+        resources
+            .into_iter()
+            .fold(self, |s, resource| s.with_embedded(name.clone(), resource))
     }
 }
 
@@ -178,12 +197,12 @@ impl<A: Display> From<A> for Link {
 
 pub trait HalContext {
     fn create_link<I, A>(&self, name: &str, parameters: A) -> (&str, Link)
-        where A: IntoIterator<Item=I>,
-              I: Display;
+    where
+        A: IntoIterator<Item = I>,
+        I: Display;
 }
 
 pub trait ToResource {
     fn get_links<C: HalContext>(&self, context: C) -> Vec<(&str, Link)>;
     fn to_resource<C: HalContext>(self, context: C) -> HalResource;
 }
-

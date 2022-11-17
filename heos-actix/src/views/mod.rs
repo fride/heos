@@ -3,9 +3,9 @@ use maud::{html, Markup, DOCTYPE};
 
 pub mod zone;
 
+pub mod browse;
 pub mod home;
 pub mod sources;
-pub mod browse;
 
 /// A basic header with a dynamic `page_title`.
 fn header(page_title: &str) -> Markup {
@@ -66,13 +66,11 @@ pub fn render_tabs(tabs: Vec<(String, String, bool)>) -> Markup {
     }
 }
 
-
 pub trait ToHttpResponse {
     fn to_response(&self, request: &HttpRequest) -> HttpResponse {
         match request.head().headers().get("ACCEPT") {
-            Some(header) if header == "application/json" =>
-                self.to_json(&request),
-            _ => self.to_html(&request)
+            Some(header) if header == "application/json" => self.to_json(&request),
+            _ => self.to_html(&request),
         }
     }
     fn to_html(&self, req: &HttpRequest) -> HttpResponse;

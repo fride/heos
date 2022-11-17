@@ -1,18 +1,17 @@
-use std::collections::HashMap;
-use axum::{extract::Form, response::Html, routing::get, Router, Extension};
 use axum::extract::Query;
 use axum::http::{header, HeaderMap};
 use axum::response::Redirect;
-use heos_api::{HeosDriver, HeosResult};
+use axum::{extract::Form, response::Html, routing::get, Extension, Router};
 use heos_api::error::HeosError;
+use heos_api::{HeosDriver, HeosResult};
 use maud::{html, Markup};
 use serde::Deserialize;
+use std::collections::HashMap;
 use tracing::info;
 
 pub fn router(driver: HeosDriver) -> Router {
     Router::new()
-        .route("/login"
-               , get(show_login).post(accept_login))
+        .route("/login", get(show_login).post(accept_login))
         .layer(Extension(driver))
 }
 
@@ -38,35 +37,34 @@ async fn show_login(Query(params): Query<HashMap<String, String>>) -> Markup {
 pub struct LoginForm {
     pub un: String,
     pub pw: String,
-    pub error: Option<String>
+    pub error: Option<String>,
 }
 
 impl LoginForm {
-    pub fn render_html(&self) -> Markup{
+    pub fn render_html(&self) -> Markup {
         html!({
-        @if let Some(error) = &self.error {
-            div {
-                ( error )
+            @if let Some(error) = &self.error {
+                div {
+                    ( error )
+                }
             }
-        }
-        form action="/login" method="post" {
-            label for="un" { ("Name")}
-            input type="text" name="un" id="un" value=(self.un){}
-            label for="un" { ("Password")}
-            input type="password" name="pw" id="pw"{}
-            input type="submit" {}
-        }
-    })
+            form action="/login" method="post" {
+                label for="un" { ("Name")}
+                input type="text" name="un" id="un" value=(self.un){}
+                label for="un" { ("Password")}
+                input type="password" name="pw" id="pw"{}
+                input type="submit" {}
+            }
+        })
     }
 }
 
 async fn accept_login(
     Extension(driver): Extension<HeosDriver>,
-    Form(mut input): Form<LoginForm>) -> Result<Redirect,Markup> {
+    Form(mut input): Form<LoginForm>,
+) -> Result<Redirect, Markup> {
     match driver.login(input.un.clone(), input.pw.clone()).await {
-        Ok(account_state) => {
-            Ok(Redirect::temporary("/sources"))
-        }
+        Ok(account_state) => Ok(Redirect::temporary("/sources")),
         Err(HeosError::InvalidCommand { command, eid, text }) => {
             input.error = Some(text);
             Err(input.render_html())
@@ -77,4 +75,3 @@ async fn accept_login(
         }
     }
 }
-

@@ -30,10 +30,9 @@ macro_rules! json_option_parser {
                                 stringify!($t)
                             ))
                             .map(|res| Some(res)))
-                            .map_err(|e| e.into())
-
+                        .map_err(|e| e.into())
                     }
-                    _ => Ok(None)
+                    _ => Ok(None),
                 }
             }
         }

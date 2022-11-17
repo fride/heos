@@ -1,24 +1,22 @@
+use crate::views::ToHttpResponse;
 use actix_web::{HttpRequest, HttpResponse};
-use heos_api::types::browse::{HeosService, BroseSourceItem, MusicSource, BrowsableMedia};
+use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, HeosService, MusicSource};
 use heos_api::types::{ContainerId, MediaId, SourceId};
 use maud::{html, Markup};
 use rust_hall::HalResource;
-use crate::views::ToHttpResponse;
 
 pub fn media_url(media: &BrowsableMedia, parent_id: &SourceId) -> String {
     match (&media.container_id, &media.mid) {
         (Some(cid), Some(mid)) => format!("/api/browse/{}/{}/{}", parent_id, &cid, &mid),
         (Some(cid), None) => format!("/api/browse/{}/{}", parent_id, &cid),
         (None, Some(mid)) => format!("/api/browse/{}/{}", parent_id, &mid),
-        _ => "./".to_string()
+        _ => "./".to_string(),
     }
 }
 
 fn get_source_link(parent_id: &SourceId, source: &BroseSourceItem) -> String {
     match source {
-        BroseSourceItem::BrowsableMedia(ms) => {
-            media_url(&ms, &parent_id)
-        }
+        BroseSourceItem::BrowsableMedia(ms) => media_url(&ms, &parent_id),
         BroseSourceItem::HeosService(hs) => {
             format!("/api/browse/{}/", &hs.sid)
         }
@@ -36,7 +34,6 @@ pub fn render_browsable_media(media: &BrowsableMedia, parent_id: SourceId) -> Ma
         }
     })
 }
-
 
 pub struct BrowseMusicSourcesResource(Vec<MusicSource>);
 
@@ -79,18 +76,17 @@ impl ToHttpResponse for BrowseMusicSourcesResource {
 
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
         let mut resource = HalResource::with_self(req.url_for_static("music_sources").unwrap());
-        let response = self.0.iter()
-            .cloned()
-            .fold(resource, |hal, music_source| {
-                let embedded = HalResource::with_self(req.url_for("music_source",
-                                                                  &[music_source.sid.to_string()]).unwrap())
-                    .add_object(music_source);
-                hal.with_embedded("music_sources", embedded)
-            });
+        let response = self.0.iter().cloned().fold(resource, |hal, music_source| {
+            let embedded = HalResource::with_self(
+                req.url_for("music_source", &[music_source.sid.to_string()])
+                    .unwrap(),
+            )
+            .add_object(music_source);
+            hal.with_embedded("music_sources", embedded)
+        });
         HttpResponse::Ok().json(response)
     }
 }
-
 
 pub struct MusicSourceContentsResource(SourceId, Vec<BroseSourceItem>);
 
@@ -117,14 +113,11 @@ impl MusicSourceContentsResource {
 
 impl ToHttpResponse for MusicSourceContentsResource {
     fn to_html(&self, req: &HttpRequest) -> HttpResponse {
-        let lis = self.1.iter()
-            .map(|source| {
-                match source {
-                    BroseSourceItem::BrowsableMedia(media) => self.render_media(media),
-                    BroseSourceItem::HeosService(source) => self.render_source(source, &req),
-                    _ => html!({ p { ( " M A D N E S S" )}})
-                }
-            });
+        let lis = self.1.iter().map(|source| match source {
+            BroseSourceItem::BrowsableMedia(media) => self.render_media(media),
+            BroseSourceItem::HeosService(source) => self.render_source(source, &req),
+            _ => html!({ p { ( " M A D N E S S" )}}),
+        });
         let body = html!({
             ul {
                 @for li in lis {
@@ -138,20 +131,17 @@ impl ToHttpResponse for MusicSourceContentsResource {
     }
 
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
-        let mut resource = HalResource::with_self(req.url_for("music_sources",
-                                                              [self.0.to_string()]).unwrap());
+        let mut resource =
+            HalResource::with_self(req.url_for("music_sources", [self.0.to_string()]).unwrap());
         let parent_id = self.0.clone();
-        let response = self.1.iter()
-            .cloned()
-            .fold(resource, |hal, music_source| {
-                let embedded = HalResource::with_self(get_source_link(&parent_id, &music_source))
-                    .add_object(music_source);
-                hal.with_embedded("music_sources", embedded)
-            });
+        let response = self.1.iter().cloned().fold(resource, |hal, music_source| {
+            let embedded = HalResource::with_self(get_source_link(&parent_id, &music_source))
+                .add_object(music_source);
+            hal.with_embedded("music_sources", embedded)
+        });
         HttpResponse::Ok().json(response)
     }
 }
-
 
 pub struct BrowseContainerResource {
     pub source_id: SourceId,
@@ -160,9 +150,11 @@ pub struct BrowseContainerResource {
 }
 
 impl BrowseContainerResource {
-    pub fn new(source_id: SourceId,
-               container_id: ContainerId,
-               media: Vec<BrowsableMedia>) -> BrowseContainerResource {
+    pub fn new(
+        source_id: SourceId,
+        container_id: ContainerId,
+        media: Vec<BrowsableMedia>,
+    ) -> BrowseContainerResource {
         Self {
             source_id,
             container_id,
@@ -188,13 +180,16 @@ impl ToHttpResponse for BrowseContainerResource {
     }
 
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
-        let mut resource = HalResource::with_self(req.url_for("music_sources",
-                                                              [self.source_id.to_string()]).unwrap());
-        let response = self.media.iter()
+        let mut resource = HalResource::with_self(
+            req.url_for("music_sources", [self.source_id.to_string()])
+                .unwrap(),
+        );
+        let response = self
+            .media
+            .iter()
             .cloned()
             .fold(resource, |hal, music_source| {
-                let embedded = HalResource::with_self("")
-                    .add_object(music_source);
+                let embedded = HalResource::with_self("").add_object(music_source);
                 hal.with_embedded("service", embedded)
             });
         HttpResponse::Ok().json(response)

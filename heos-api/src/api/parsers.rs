@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
-use std::convert::TryFrom;
 use anyhow::Context;
 use qs;
 use serde_json::Value;
+use std::collections::BTreeMap;
+use std::convert::TryFrom;
 
 use crate::connection::{CommandResponse, EventResponse};
 use crate::error::HeosError;
@@ -43,7 +43,7 @@ impl TryFrom<CommandResponse> for AccountState {
     type Error = HeosError;
 
     fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
-        let mut params: BTreeMap<String,String> = qs::from_str(&value.message)
+        let mut params: BTreeMap<String, String> = qs::from_str(&value.message)
             .with_context(|| format!("failed to parse response as login: {}", value.message))?;
         if let Some(un) = params.remove("un") {
             Ok(AccountState::SignedIn(un))
@@ -64,39 +64,32 @@ struct BrowseMusicContainerParameters {
 }
 
 mod range {
-    use anyhow::Context;
-    use serde::Deserialize;
     use crate::error::HeosError;
     use crate::types::Range;
+    use anyhow::Context;
+    use serde::Deserialize;
 
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<Range, D::Error>
-        where
-            D: serde::Deserializer<'de>,
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Range, D::Error>
+    where
+        D: serde::Deserializer<'de>,
     {
         let range = String::deserialize(deserializer)?;
-        let ranges : Vec<&str> = range.split(",").collect();
-        let start = ranges[0].parse()
-            .map_err(serde::de::Error::custom)?;
-        let end = ranges[1].parse()
-            .map_err(serde::de::Error::custom)?;
-        Ok(Range {
-            start, end
-        })
+        let ranges: Vec<&str> = range.split(",").collect();
+        let start = ranges[0].parse().map_err(serde::de::Error::custom)?;
+        let end = ranges[1].parse().map_err(serde::de::Error::custom)?;
+        Ok(Range { start, end })
     }
 }
-
 
 impl TryFrom<CommandResponse> for BrowseMusicContainerResponse {
     type Error = HeosError;
 
     fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
-        let params : BrowseMusicContainerParameters = qs::from_str(&value.message)
+        let params: BrowseMusicContainerParameters = qs::from_str(&value.message)
             .with_context(|| format!("failed to parse response: {}", &value.message))?;
         let items = serde_json::from_value(value.payload)
             .with_context(|| format!("failed to parse response: {}", &value.message))?;
-        Ok(BrowseMusicContainerResponse{
+        Ok(BrowseMusicContainerResponse {
             sid: 0,
             cid: params.cid,
             range: params.range,
@@ -108,7 +101,6 @@ impl TryFrom<CommandResponse> for BrowseMusicContainerResponse {
 }
 // event parsing!
 pub fn response_to_event(response: EventResponse) -> crate::HeosResult<HeosEvent> {
-
     let json = qs_to_json(&response.event_name, &response.message)?;
     let event: HeosEvent = serde_json::from_value(json).with_context(|| {
         format!(
@@ -149,9 +141,9 @@ fn qs_to_json(event_name: &str, message: &str) -> crate::HeosResult<serde_json::
 
 #[cfg(test)]
 mod test {
-    use serde_json::json;
-    use crate::connection::Frame;
     use super::*;
+    use crate::connection::Frame;
+    use serde_json::json;
 
     #[test]
     pub fn test_play_mode() {
@@ -199,7 +191,7 @@ mod test {
                 },
               ]
         });
-        let frame : Frame =  Frame::from_json(heos_json_response).unwrap();
+        let frame: Frame = Frame::from_json(heos_json_response).unwrap();
         if let Frame::Response(command_response) = frame {
             // let parsed_response :Vec<BroseSourceItem> = command_response.try_into().unwrap();
             // match parsed_response[0] {

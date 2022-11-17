@@ -9,7 +9,7 @@ use crate::configuration::Settings;
 use crate::routers::{api, music_source};
 use crate::routers::{
     health_check, home, main_css, zone::details, zone::edit_zone_members_form,
-    zone::list as list_zones, zone::new as new_zone
+    zone::list as list_zones, zone::new as new_zone,
 };
 
 pub struct Application {

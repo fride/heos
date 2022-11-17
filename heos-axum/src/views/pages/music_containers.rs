@@ -1,10 +1,10 @@
+use crate::views::browse::render_media_list_item;
+use crate::views::pages::page;
 use axum::response::{IntoResponse, Response};
 use heos_api::types::browse::{BroseSourceItem, BrowsableMedia};
 use heos_api::types::{ContainerId, Range, SourceId};
 use maud::{html, Markup};
 use tracing::info;
-use crate::views::browse::render_media_list_item;
-use crate::views::pages::page;
 
 #[derive(Debug)]
 pub struct BrowseMusicContainerPage {
@@ -20,16 +20,26 @@ impl BrowseMusicContainerPage {
     pub fn next_link(&self) -> Option<String> {
         if (self.count as u16) > self.range.start {
             let next = self.range.next();
-            Some(format!("/sources/{}/containers/{}?{}", &self.source_id, &self.container_id, next.as_query_str()))
+            Some(format!(
+                "/sources/{}/containers/{}?{}",
+                &self.source_id,
+                &self.container_id,
+                next.as_query_str()
+            ))
         } else {
             None
         }
     }
 
     pub fn prev_link(&self) -> Option<String> {
-        self.range.previous().map(|next|
-            format!("/sources/{}/containers/{}?{}", &self.source_id, &self.container_id, next.as_query_str())
-        )
+        self.range.previous().map(|next| {
+            format!(
+                "/sources/{}/containers/{}?{}",
+                &self.source_id,
+                &self.container_id,
+                next.as_query_str()
+            )
+        })
     }
 
     pub fn render_html(&self) -> Markup {

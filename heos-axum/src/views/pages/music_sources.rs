@@ -1,9 +1,9 @@
-use axum::response::{IntoResponse, Response};
-use maud::{html, Markup};
-use heos_api::types::browse::{BroseSourceItem, MusicSource};
-use heos_api::types::SourceId;
 use crate::views::browse::render_media_list_item;
 use crate::views::pages::page;
+use axum::response::{IntoResponse, Response};
+use heos_api::types::browse::{BroseSourceItem, MusicSource};
+use heos_api::types::SourceId;
+use maud::{html, Markup};
 
 pub struct BrowseMusicSourcePage {
     pub contents: Vec<BroseSourceItem>,
@@ -29,9 +29,9 @@ impl BrowseMusicSourcePage {
                     }
                 })
             }
-            BroseSourceItem::BrowsableMedia(media) => render_media_list_item(
-                media, &self.source_id
-            )
+            BroseSourceItem::BrowsableMedia(media) => {
+                render_media_list_item(media, &self.source_id)
+            }
         }
     }
 
@@ -39,18 +39,18 @@ impl BrowseMusicSourcePage {
         let mut items: Vec<Markup> = vec![];
 
         let html = html!({
-        ul .media-list {
-            @for item in &self.contents {
-                ( self.render(item) )
+            ul .media-list {
+                @for item in &self.contents {
+                    ( self.render(item) )
+                }
             }
-        }
-    });
+        });
         super::page(html)
     }
 }
 
 pub struct SourceDetailsPage {
-    pub source: MusicSource
+    pub source: MusicSource,
 }
 impl IntoResponse for SourceDetailsPage {
     fn into_response(self) -> Response {
@@ -70,7 +70,8 @@ impl IntoResponse for SourceDetailsPage {
                     }
                 }
             }
-        }).into_response()
+        })
+        .into_response()
     }
 }
 

@@ -1,14 +1,16 @@
+use crate::types::browse::{
+    BroseSourceItem, BrowsableMedia, BrowseMusicContainerResponse, MusicSource,
+};
+use crate::types::event::HeosEvent;
+use crate::types::group::Group;
+use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
+use crate::types::system::AccountState;
+use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
+use crate::{HeosApi, HeosError, HeosResult};
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use tokio::net::ToSocketAddrs;
 use tracing::{debug, Value};
-use crate::{HeosApi, HeosError, HeosResult};
-use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
-use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
-use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia, BrowseMusicContainerResponse};
-use crate::types::event::HeosEvent;
-use crate::types::group::Group;
-use crate::types::system::AccountState;
 
 #[derive(Default, Debug)]
 struct DriverState {
@@ -22,12 +24,12 @@ impl DriverState {
         Arc::new(Mutex::new(DriverState::default()))
     }
 
-    pub fn set_players<A : IntoIterator<Item = HeosPlayer>> (mut self, players: A){
+    pub fn set_players<A: IntoIterator<Item = HeosPlayer>>(mut self, players: A) {
         self.players = players.into_iter().map(|p| (p.player_id, p)).collect();
         self.groups.clear();
     }
 
-    pub fn set_groups<A : IntoIterator<Item = Group>> (mut self, groups: A){
+    pub fn set_groups<A: IntoIterator<Item = Group>>(mut self, groups: A) {
         self.groups = groups.into_iter().map(|g| (g.gid, g)).collect();
     }
 }
@@ -43,10 +45,7 @@ impl HeosDriver {
         let api = HeosApi::connect(addr).await?;
         let state = DriverState::new();
 
-        let driver = Self {
-            api,
-            state,
-        };
+        let driver = Self { api, state };
         let _ = driver.init().await;
         let _ = driver.start_event_listener().await;
         Ok(driver)
@@ -57,8 +56,16 @@ impl HeosDriver {
         let groups = load_groups(&self.api).await?;
         let music_sources = self.api.get_music_sources().await?;
         {
-            debug!("Found {} players and {} groups", players.len(), groups.len());
-            println!("Found {} players and {} groups", players.len(), groups.len());
+            debug!(
+                "Found {} players and {} groups",
+                players.len(),
+                groups.len()
+            );
+            println!(
+                "Found {} players and {} groups",
+                players.len(),
+                groups.len()
+            );
             let mut state = self.state.lock().unwrap();
             state.players.clear();
             state.groups.clear();
@@ -68,8 +75,8 @@ impl HeosDriver {
         }
         Ok(())
     }
-    pub async fn login(&self, un: String, pw: String) -> HeosResult<AccountState>{
-        self.api.login(un,pw).await
+    pub async fn login(&self, un: String, pw: String) -> HeosResult<AccountState> {
+        self.api.login(un, pw).await
     }
 
     pub fn players(&self) -> Vec<HeosPlayer> {
@@ -90,12 +97,16 @@ impl HeosDriver {
         music_sources
     }
 
-    pub async fn get_player_queue(&self, pid: PlayerId, range: Range) -> HeosResult<Vec<QueueEntry>>{
+    pub async fn get_player_queue(
+        &self,
+        pid: PlayerId,
+        range: Range,
+    ) -> HeosResult<Vec<QueueEntry>> {
         self.api.get_queue(pid, range).await
     }
 
     // TODO this is a bit slow as the event will come anyways ....
-    pub async fn create_group(&self, leader: PlayerId, members: Vec<PlayerId>) -> HeosResult<()>{
+    pub async fn create_group(&self, leader: PlayerId, members: Vec<PlayerId>) -> HeosResult<()> {
         let mut group = vec![leader];
         group.extend(members);
         let _ = self.api.set_group(group).await?;
@@ -105,11 +116,18 @@ impl HeosDriver {
         Ok(())
     }
 
-    pub async fn browse(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>>{
+    pub async fn browse(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>> {
         self.api.browse_music_sources(sid).await
     }
-    pub async fn browse_music_containers(&self, sid: &SourceId, container_id: &ContainerId, range: &Range) -> HeosResult<BrowseMusicContainerResponse>{
-        self.api.browse_music_containers(sid, container_id, range).await
+    pub async fn browse_music_containers(
+        &self,
+        sid: &SourceId,
+        container_id: &ContainerId,
+        range: &Range,
+    ) -> HeosResult<BrowseMusicContainerResponse> {
+        self.api
+            .browse_music_containers(sid, container_id, range)
+            .await
     }
 
     async fn start_event_listener(&self) -> HeosResult<()> {
@@ -124,32 +142,29 @@ impl HeosDriver {
         Ok(())
     }
 
-
-    async fn handle_event(event: HeosEvent,
-                          connection: &HeosApi,
-                          driver_state: &Arc<Mutex<DriverState>>) -> HeosResult<()> {
+    async fn handle_event(
+        event: HeosEvent,
+        connection: &HeosApi,
+        driver_state: &Arc<Mutex<DriverState>>,
+    ) -> HeosResult<()> {
         match event {
             HeosEvent::SourcesChanged => {
-                let _ = connection.get_music_sources().await
-                    .map(|sources| {
-                        let mut state = driver_state.lock().unwrap();
-                        state.music_sources = sources.into_iter().map(|s| (s.sid, s)).collect();
-                    });
+                let _ = connection.get_music_sources().await.map(|sources| {
+                    let mut state = driver_state.lock().unwrap();
+                    state.music_sources = sources.into_iter().map(|s| (s.sid, s)).collect();
+                });
             }
             HeosEvent::PlayersChanged => {
-                let _ = load_players(&connection).await
-                    .map(|players| {
-                        let mut state = driver_state.lock().unwrap();
-                        state.players = players.into_iter().map(|s| (s.player_id, s)).collect();
-                    });
+                let _ = load_players(&connection).await.map(|players| {
+                    let mut state = driver_state.lock().unwrap();
+                    state.players = players.into_iter().map(|s| (s.player_id, s)).collect();
+                });
             }
             HeosEvent::GroupChanged => {
-                let _ = load_groups(connection)
-                    .await
-                    .map(|groups| {
-                        let mut state = driver_state.lock().unwrap();
-                        state.groups = groups.into_iter().map(|s| (s.gid, s)).collect();
-                    });
+                let _ = load_groups(connection).await.map(|groups| {
+                    let mut state = driver_state.lock().unwrap();
+                    state.groups = groups.into_iter().map(|s| (s.gid, s)).collect();
+                });
             }
             HeosEvent::PlayerStateChanged { player_id, state } => {
                 let mut driver_state = driver_state.lock().unwrap();
@@ -158,14 +173,16 @@ impl HeosDriver {
                 }
             }
             HeosEvent::PlayerNowPlayingChanged { player_id } => {
-                let _ = connection.get_now_playing_media(&player_id)
-                    .await
-                    .map(|now_playing_media| {
-                        let mut state = driver_state.lock().unwrap();
-                        if let Some(player) = state.players.get_mut(&player_id) {
-                            player.now_playing = now_playing_media
-                        }
-                    });
+                let _ =
+                    connection
+                        .get_now_playing_media(&player_id)
+                        .await
+                        .map(|now_playing_media| {
+                            let mut state = driver_state.lock().unwrap();
+                            if let Some(player) = state.players.get_mut(&player_id) {
+                                player.now_playing = now_playing_media
+                            }
+                        });
             }
             HeosEvent::PlayerNowPlayingProgress { .. } => {}
             HeosEvent::PlayerPlaybackError { .. } => {}
@@ -179,7 +196,6 @@ impl HeosDriver {
         Ok(())
     }
 }
-
 
 pub async fn load_groups(channel: &HeosApi) -> HeosResult<Vec<Group>> {
     let mut groups = vec![];
