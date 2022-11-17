@@ -11,6 +11,7 @@ heos-api = {path = "../heos-api"}
 serde = { version = "1.0.147", features = ["derive"] }
 
 tokio = { version = "1.21.2", default-features = false, features = ["rt-multi-thread", "macros"] }
+tower-http = { version = "0.3.4", features = ["full"] }
 axum = { version = "0.5.17", features = ["headers", "tower-log"] }
 maud = {version = "0.24.0", features =["axum"] }
 
@@ -26,3 +27,4 @@ mime = "0.3"
 
 anyhow = "1.0.66"
 dotenv = "0.15.0"
+

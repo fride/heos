@@ -3,15 +3,18 @@ use axum::{async_trait, http::StatusCode, response::{IntoResponse, Response}, ro
 use heos_api::HeosDriver;
 use crate::config::Config;
 
-pub mod listing;
+mod music_container;
+mod music_source;
 
 pub fn router(driver: HeosDriver) -> Router {
     Router::new()
         .route("/sources/:source_id/containers/:container_id"
-               , get(listing::browse_music_container))
+               , get(music_container::browse_music_container))
         .route("/sources/:source_id/browse"
-               , get(listing::browse_music_source))
+               , get(music_source::browse_music_source))
+        .route("/sources/:source_id"
+               , get(music_source::source_details))
         .route("/sources"
-               , get(listing::list_music_sources))
+               , get(music_source::list_music_sources))
         .layer(Extension(driver))
 }

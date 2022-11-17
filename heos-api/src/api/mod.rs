@@ -8,7 +8,7 @@ use tracing::{error, info};
 use parsers::*;
 
 use crate::connection::{CommandResponse, Connection};
-use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia};
+use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia, BrowseMusicContainerResponse};
 use crate::types::group::{GroupInfo, GroupVolume};
 use crate::types::player::{
     NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState,
@@ -194,12 +194,12 @@ impl HeosApi {
             .await
     }
 
-    pub async fn browse(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>>{
+    pub async fn browse_music_sources(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>>{
         let music_sources = self.execute_command(format!("browse/browse?sid={}", sid)).await?;
         Ok(music_sources)
     }
 
-    pub async fn browse_music_containers(&self, sid: &SourceId, cid: &ContainerId, range: &Range) -> HeosResult<Vec<BrowsableMedia>>{
+    pub async fn browse_music_containers(&self, sid: &SourceId, cid: &ContainerId, range: &Range) -> HeosResult<BrowseMusicContainerResponse>{
         let music_sources = self.execute_command(
             format!("browse/browse?sid={}&cid={}&range={},{}", sid,cid, range.start, range.end)).await?;
         Ok(music_sources)

@@ -52,6 +52,60 @@ impl TryFrom<CommandResponse> for AccountState {
         }
     }
 }
+
+#[derive(Deserialize, Serialize)]
+struct BrowseMusicContainerParameters {
+    pub sid: SourceId,
+    pub cid: ContainerId,
+    #[serde(deserialize_with = "range::deserialize")]
+    pub range: Range,
+    pub count: usize,
+    pub returned: usize,
+}
+
+mod range {
+    use anyhow::Context;
+    use serde::Deserialize;
+    use crate::error::HeosError;
+    use crate::types::Range;
+
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<Range, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+    {
+        let range = String::deserialize(deserializer)?;
+        let ranges : Vec<&str> = range.split(",").collect();
+        let start = ranges[0].parse()
+            .map_err(serde::de::Error::custom)?;
+        let end = ranges[1].parse()
+            .map_err(serde::de::Error::custom)?;
+        Ok(Range {
+            start, end
+        })
+    }
+}
+
+
+impl TryFrom<CommandResponse> for BrowseMusicContainerResponse {
+    type Error = HeosError;
+
+    fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
+        let params : BrowseMusicContainerParameters = qs::from_str(&value.message)
+            .with_context(|| format!("failed to parse response: {}", &value.message))?;
+        let items = serde_json::from_value(value.payload)
+            .with_context(|| format!("failed to parse response: {}", &value.message))?;
+        Ok(BrowseMusicContainerResponse{
+            sid: 0,
+            cid: params.cid,
+            range: params.range,
+            count: params.count,
+            returned: params.returned,
+            items,
+        })
+    }
+}
 // event parsing!
 pub fn response_to_event(response: EventResponse) -> crate::HeosResult<HeosEvent> {
 

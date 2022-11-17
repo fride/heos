@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use crate::types::{ContainerId, MediaId, YesOrNo};
+use crate::types::{ContainerId, MediaId, Range, YesOrNo};
 use super::SourceId;
 
 #[derive(Serialize, Deserialize, Debug, Eq, Clone, PartialEq)]
@@ -53,10 +53,15 @@ pub enum MediaType {
     Album,
     #[serde(rename = "song")]
     Song,
+    #[serde(rename = "genre")]
+    Genre,
     #[serde(rename = "container")]
     Container,
     #[serde(rename = "station")]
     Station,
+    // Not Documented in the HEOS Api ;)
+    #[serde(rename = "playlist")]
+    Playlist,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -71,4 +76,15 @@ pub struct BrowsableMedia {
     pub artist : Option<String>,
     pub album : Option<String>,
     pub mid : Option<MediaId>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BrowseMusicContainerResponse {
+    pub sid: SourceId,
+    pub cid: ContainerId,
+    pub range: Range,
+    pub count: usize,
+    pub returned: usize,
+    pub items: Vec<BrowsableMedia>
+    //sid=10&cid=My Music-Tracks&range=0,100&returned=50&count=776
 }

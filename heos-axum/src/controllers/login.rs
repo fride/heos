@@ -8,7 +8,6 @@ use heos_api::error::HeosError;
 use maud::{html, Markup};
 use serde::Deserialize;
 use tracing::info;
-use crate::http::AppError;
 
 pub fn router(driver: HeosDriver) -> Router {
     Router::new()

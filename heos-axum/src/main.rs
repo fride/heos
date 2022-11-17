@@ -12,10 +12,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 
 use crate::config::Config;
-use heos_axum::http;
+use heos_axum::{controllers};
 use heos_axum::config;
 use heos_axum::axum_ructe::*;
-
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,6 +28,6 @@ async fn main() -> anyhow::Result<()> {
     tracing::debug!("listening ");
     let diver = heos_api::HeosDriver::new("192.168.178.34:1255").await?;
     println!("Got Driver");
-    http::serve(Config, diver).await?;
+    controllers::serve(Config, diver).await?;
     Ok(())
 }

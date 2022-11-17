@@ -1,3 +1,5 @@
+use heos_api::HeosDriver;
+
 // macros need to go to the top!
 #[macro_use]
 pub mod axum_ructe;
@@ -12,8 +14,12 @@ pub mod axum_ructe;
 ///
 /// [`clap`]: https://github.com/clap-rs/clap/
 pub mod config;
+pub mod views;
+pub mod controllers;
+pub mod error;
 
-/// Contains the setup code for the API build with Axum.
-///
-/// The Realworld API routes exist in child modules of this.
-pub mod http;
+
+#[derive(Clone)]
+pub struct ApiContext {
+    pub driver: HeosDriver,
+}

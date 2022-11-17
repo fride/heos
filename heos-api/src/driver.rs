@@ -5,7 +5,7 @@ use tracing::{debug, Value};
 use crate::{HeosApi, HeosError, HeosResult};
 use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
 use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
-use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia};
+use crate::types::browse::{BroseSourceItem, MusicSource, BrowsableMedia, BrowseMusicContainerResponse};
 use crate::types::event::HeosEvent;
 use crate::types::group::Group;
 use crate::types::system::AccountState;
@@ -106,9 +106,9 @@ impl HeosDriver {
     }
 
     pub async fn browse(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>>{
-        self.api.browse(sid).await
+        self.api.browse_music_sources(sid).await
     }
-    pub async fn browse_music_containers(&self, sid: &SourceId, container_id: &ContainerId, range: &Range) -> HeosResult<Vec<BrowsableMedia>>{
+    pub async fn browse_music_containers(&self, sid: &SourceId, container_id: &ContainerId, range: &Range) -> HeosResult<BrowseMusicContainerResponse>{
         self.api.browse_music_containers(sid, container_id, range).await
     }
 
