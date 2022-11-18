@@ -1,13 +1,22 @@
+use anyhow::Error;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use tracing::error;
 
 use heos_api::error::HeosError;
+use thiserror::Error;
 
 pub enum AppError {
     HeosError(HeosError),
+    InternalError(anyhow::Error),
     NotFound,
 }
 
+impl From<anyhow::Error> for AppError {
+    fn from(err: Error) -> Self {
+        AppError::InternalError(err)
+    }
+}
 /// This makes it possible to use `?` to automatically convert a `UserRepoError`
 /// into an `AppError`.
 impl From<HeosError> for AppError {
@@ -38,6 +47,13 @@ impl IntoResponse for AppError {
                 StatusCode::NOT_FOUND,
                 "The thing that should not be can not be found!".to_string(),
             ),
+            AppError::InternalError(err) => {
+                error!("Well this sucks! {:#?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Something went wrong".to_string(),
+                )
+            }
         };
         (status, error_message).into_response()
     }

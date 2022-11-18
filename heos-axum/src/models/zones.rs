@@ -18,7 +18,7 @@ impl Zone {
         match self.state {
             PlayState::Play => "fa-solid fa-play",
             PlayState::Pause => "fa-solid fa-stop",
-            PlayState::Stop => "fa-solid fa-pasue",
+            PlayState::Stop => "fa-solid fa-pause",
         }
     }
     pub fn now_playing_image(&self) -> &str {

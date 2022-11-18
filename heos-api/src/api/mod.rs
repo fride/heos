@@ -8,9 +8,7 @@ use tracing::{error, info};
 use parsers::*;
 
 use crate::connection::{CommandResponse, Connection};
-use crate::types::browse::{
-    BroseSourceItem, BrowseMusicContainerResponse, MusicSource,
-};
+use crate::types::browse::{BroseSourceItem, BrowseMusicContainerResponse, MusicSource};
 use crate::types::event::HeosEvent;
 use crate::types::group::{GroupInfo, GroupVolume};
 use crate::types::player::{

@@ -1,18 +1,16 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 
 use tokio::net::ToSocketAddrs;
 use tracing::debug;
 
-use crate::{HeosApi, HeosError, HeosResult};
-use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
-use crate::types::browse::{
-    BroseSourceItem, BrowseMusicContainerResponse, MusicSource,
-};
+use crate::types::browse::{BroseSourceItem, BrowseMusicContainerResponse, MusicSource};
 use crate::types::event::HeosEvent;
-use crate::types::group::Group;
+use crate::types::group::{Group, GroupRole};
 use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
 use crate::types::system::AccountState;
+use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
+use crate::{HeosApi, HeosError, HeosResult};
 
 #[derive(Default, Debug)]
 struct DriverState {
@@ -99,7 +97,30 @@ impl HeosDriver {
     }
 
     // TODO this is a bit slow as the event will come anyways ....
-    pub async fn create_group(&self, leader: PlayerId, members: Vec<PlayerId>) -> HeosResult<()> {
+
+    pub async fn create_group<C: IntoIterator<Item = PlayerId>>(
+        &self,
+        leader: PlayerId,
+        members: C,
+    ) -> HeosResult<()> {
+        let members: BTreeSet<PlayerId> = members.into_iter().collect();
+        // check if we do a valid request first
+        if let Some(group) = self.groups().iter().find(|g| g.gid == leader) {
+            let members_in_group: BTreeSet<PlayerId> = group
+                .players
+                .iter()
+                .filter_map(|p| {
+                    if p.role == GroupRole::Member {
+                        Some(p.pid.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            if members == members_in_group {
+                return Ok(());
+            }
+        }
         let mut group = vec![leader];
         group.extend(members);
         let _ = self.api.set_group(group).await?;
@@ -157,6 +178,10 @@ impl HeosDriver {
                 let _ = load_groups(connection).await.map(|groups| {
                     let mut state = driver_state.lock().unwrap();
                     state.groups = groups.into_iter().map(|s| (s.gid, s)).collect();
+                });
+                let _ = load_players(connection).await.map(|players| {
+                    let mut state = driver_state.lock().unwrap();
+                    state.players = players.into_iter().map(|p| (p.player_id, p)).collect();
                 });
             }
             HeosEvent::PlayerStateChanged { player_id, state } => {
