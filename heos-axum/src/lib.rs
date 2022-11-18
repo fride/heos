@@ -17,8 +17,11 @@ pub mod config;
 pub mod controllers;
 pub mod error;
 pub mod views;
-
+pub mod models;
 #[derive(Clone)]
 pub struct ApiContext {
     pub driver: HeosDriver,
 }
+
+// include generated templates
+include!(concat!(env!("OUT_DIR"), "/templates.rs"));

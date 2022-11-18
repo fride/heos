@@ -1,8 +1,11 @@
-use crate::views::pages::page;
 use axum::response::{IntoResponse, Response};
-use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, MusicSource};
-use heos_api::types::{ContainerId, Range, SourceId};
 use maud::{html, Markup};
+
+use heos_api::types::{ContainerId, Range, SourceId};
+use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, MusicSource};
+use crate::templates::statics::*;
+
+use crate::views::pages::page;
 
 pub fn render_media_list_item(item: &BrowsableMedia, source_id: &SourceId) -> Markup {
     let description: Markup = match (&item.artist, &item.album) {
@@ -19,17 +22,21 @@ pub fn render_media_list_item(item: &BrowsableMedia, source_id: &SourceId) -> Ma
             p .name  { (item.name ) }
         }),
     };
-
+    let image_url  = if item.image_url.is_empty() {
+        format!("/assets/{}", &folder_svg.name)
+    } else {
+        item.image_url.clone()
+    };
     html!({
         li {
-            .media-list__item {
+            .media-list__media-item{
                 @if let Some(cid) = &item.container_id {
+                img src=(image_url) height="32px" {}
                 a href=( format!("/sources/{}/containers/{}/", source_id, cid) ) {
-                    img src=(item.image_url) height="32px" {}
                     ( description )
                 }
                 } @else {
-                    img src=(item.image_url) height="32px" {}
+                    img src=(image_url) height="32px" {}
                     ( description )
                 }
             }

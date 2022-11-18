@@ -1,13 +1,11 @@
-use crate::config::Config;
 use axum::{
-    async_trait,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::{get, post},
-    Extension, Json, Router,
+    Extension,
+    Router, routing::{get, post},
 };
+
 use heos_api::HeosDriver;
-use std::sync::Arc;
+
+use crate::config::Config;
 
 mod music_container;
 mod music_source;

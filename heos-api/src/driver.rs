@@ -1,16 +1,18 @@
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+
+use tokio::net::ToSocketAddrs;
+use tracing::debug;
+
+use crate::{HeosApi, HeosError, HeosResult};
+use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
 use crate::types::browse::{
-    BroseSourceItem, BrowsableMedia, BrowseMusicContainerResponse, MusicSource,
+    BroseSourceItem, BrowseMusicContainerResponse, MusicSource,
 };
 use crate::types::event::HeosEvent;
 use crate::types::group::Group;
 use crate::types::player::{HeosPlayer, PlayerInfo, QueueEntry};
 use crate::types::system::AccountState;
-use crate::types::{ContainerId, GroupId, PlayerId, Range, SourceId};
-use crate::{HeosApi, HeosError, HeosResult};
-use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex};
-use tokio::net::ToSocketAddrs;
-use tracing::{debug, Value};
 
 #[derive(Default, Debug)]
 struct DriverState {
@@ -22,15 +24,6 @@ struct DriverState {
 impl DriverState {
     pub fn new() -> Arc<Mutex<Self>> {
         Arc::new(Mutex::new(DriverState::default()))
-    }
-
-    pub fn set_players<A: IntoIterator<Item = HeosPlayer>>(mut self, players: A) {
-        self.players = players.into_iter().map(|p| (p.player_id, p)).collect();
-        self.groups.clear();
-    }
-
-    pub fn set_groups<A: IntoIterator<Item = Group>>(mut self, groups: A) {
-        self.groups = groups.into_iter().map(|g| (g.gid, g)).collect();
     }
 }
 

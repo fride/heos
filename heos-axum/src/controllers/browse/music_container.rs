@@ -1,16 +1,17 @@
+use std::collections::HashMap;
+
+use axum::Extension;
 use axum::extract::{Path, Query};
 use axum::response::{Html, IntoResponse, Response};
-use axum::Extension;
 use maud::{html, Markup};
 use serde::Deserialize;
-use std::collections::HashMap;
 use tracing::info;
 
+use heos_api::{HeosDriver, HeosResult};
+use heos_api::types::{ContainerId, MediaId, Range, SourceId};
 use heos_api::types::browse::{
     BroseSourceItem, BrowsableMedia, HeosService, MediaType, MusicSource,
 };
-use heos_api::types::{ContainerId, MediaId, Range, SourceId};
-use heos_api::{HeosDriver, HeosResult};
 
 use crate::axum_ructe::render;
 use crate::error::AppError;

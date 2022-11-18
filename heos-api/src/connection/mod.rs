@@ -56,6 +56,7 @@ pub struct Connection {
     peer_addr: SocketAddr,
 }
 
+#[allow(dead_code)]
 impl Connection {
     // pub async fn find() -> crate::HeosResult<Connection> {
     //     let ips = discover::ssdp_discover_heos_devices()?;

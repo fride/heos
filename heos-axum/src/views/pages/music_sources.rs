@@ -1,12 +1,15 @@
-use crate::views::browse::render_media_list_item;
-use crate::views::pages::page;
 use axum::response::{IntoResponse, Response};
-use heos_api::types::browse::{BroseSourceItem, MusicSource};
-use heos_api::types::SourceId;
 use maud::{html, Markup};
 
+use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, HeosService, MusicSource};
+use heos_api::types::SourceId;
+
+use crate::views::browse::render_media_list_item;
+use crate::views::pages::page;
+
 pub struct BrowseMusicSourcePage {
-    pub contents: Vec<BroseSourceItem>,
+    pub media_items: Vec<BrowsableMedia>,
+    pub services: Vec<HeosService>,
     pub source_id: SourceId,
     pub base_uri: String,
 }
@@ -18,34 +21,31 @@ impl IntoResponse for BrowseMusicSourcePage {
 }
 
 impl BrowseMusicSourcePage {
-    fn render(&self, item: &BroseSourceItem) -> Markup {
-        match item {
-            BroseSourceItem::HeosService(service) => {
-                html!({
-                    li {
-                        a href=(format!("/sources/{}/browse", service.sid)) {
-                            ( service.name )
+    pub fn render_html(&self) -> Markup {
+        let html = html!({
+            div {
+                ol .media-list {
+                    @for item in &self.media_items {
+                        ( render_media_list_item(item, &self.source_id) )
+                    }
+                }
+            }
+            div {
+                ol. media-list {
+                    @for service in &self.services {
+                         li {
+                            div .media-list__heos-service {
+                                img src=(service.image_url) height="32px" {}
+                                a href=(format!("/sources/{}/browse", service.sid)) {
+                                    ( service.name )
+                                }
+                            }
                         }
                     }
-                })
-            }
-            BroseSourceItem::BrowsableMedia(media) => {
-                render_media_list_item(media, &self.source_id)
-            }
-        }
-    }
-
-    pub fn render_html(&self) -> Markup {
-        let mut items: Vec<Markup> = vec![];
-
-        let html = html!({
-            ul .media-list {
-                @for item in &self.contents {
-                    ( self.render(item) )
                 }
             }
         });
-        super::page(html)
+        page(html)
     }
 }
 
@@ -83,12 +83,11 @@ pub struct MusicSourcesPages {
 impl MusicSourcesPages {
     pub fn render_html(&self) -> Markup {
         page(html!({
-            ul .music-sources {
+            div .music-sources {
                 @for source in &self.music_sources {
-                    li {
-                        img src=(source.image_url) height="32px" {}
-                        a href=( format!("{}/sources/{}/browse", self.base_uri, source.sid)) {
-                            ( source.name )
+                     div {
+                        a href=(format!("{}/sources/{}/browse", self.base_uri, source.sid)) alt=( source.name ) {
+                            img src=(source.image_url) {}
                         }
                     }
                 }

@@ -1,13 +1,15 @@
+use std::collections::HashMap;
+
+use axum::{Extension, extract::Form, response::Html, Router, routing::get};
 use axum::extract::Query;
 use axum::http::{header, HeaderMap};
 use axum::response::Redirect;
-use axum::{extract::Form, response::Html, routing::get, Extension, Router};
-use heos_api::error::HeosError;
-use heos_api::{HeosDriver, HeosResult};
 use maud::{html, Markup};
 use serde::Deserialize;
-use std::collections::HashMap;
 use tracing::info;
+
+use heos_api::{HeosDriver, HeosResult};
+use heos_api::error::HeosError;
 
 pub fn router(driver: HeosDriver) -> Router {
     Router::new()

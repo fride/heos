@@ -64,9 +64,7 @@ struct BrowseMusicContainerParameters {
 }
 
 mod range {
-    use crate::error::HeosError;
     use crate::types::Range;
-    use anyhow::Context;
     use serde::Deserialize;
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Range, D::Error>

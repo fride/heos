@@ -9,7 +9,7 @@ use parsers::*;
 
 use crate::connection::{CommandResponse, Connection};
 use crate::types::browse::{
-    BroseSourceItem, BrowsableMedia, BrowseMusicContainerResponse, MusicSource,
+    BroseSourceItem, BrowseMusicContainerResponse, MusicSource,
 };
 use crate::types::event::HeosEvent;
 use crate::types::group::{GroupInfo, GroupVolume};
