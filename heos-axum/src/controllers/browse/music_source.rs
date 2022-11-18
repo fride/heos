@@ -1,10 +1,8 @@
-use axum::Extension;
 use axum::extract::Path;
-use axum::response::{IntoResponse, Response};
-use maud::html;
+use axum::Extension;
 
+use heos_api::types::browse::BroseSourceItem;
 use heos_api::HeosDriver;
-use heos_api::types::browse::{BroseSourceItem, MusicSource};
 
 use crate::error::AppError;
 use crate::views::pages::music_sources::{
@@ -38,15 +36,15 @@ pub async fn browse_music_source(
     Extension(driver): Extension<HeosDriver>,
 ) -> Result<BrowseMusicSourcePage, AppError> {
     let contents = driver.browse(source_id).await?;
-    use itertools::{Itertools, Either};
+    use itertools::{Either, Itertools};
     let (services, media_items) = contents.into_iter().partition_map(|item| match item {
         BroseSourceItem::HeosService(service) => Either::Left(service),
-        BroseSourceItem::BrowsableMedia(media) => Either::Right(media)
+        BroseSourceItem::BrowsableMedia(media) => Either::Right(media),
     });
     Ok(BrowseMusicSourcePage {
         base_uri: "".to_string(),
         source_id,
         services,
-        media_items
+        media_items,
     })
 }

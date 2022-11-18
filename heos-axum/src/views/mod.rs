@@ -3,8 +3,8 @@ use maud::Markup;
 pub mod pages;
 
 pub mod browse;
-pub mod sources;
 pub mod media;
+pub mod sources;
 pub mod zones;
 
 pub trait RenderHtml {

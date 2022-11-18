@@ -1,9 +1,8 @@
 use axum::response::{IntoResponse, Response};
 use maud::{html, Markup};
-use tracing::info;
 
+use heos_api::types::browse::BrowsableMedia;
 use heos_api::types::{ContainerId, Range, SourceId};
-use heos_api::types::browse::{BroseSourceItem, BrowsableMedia};
 
 use crate::views::browse::render_media_list_item;
 use crate::views::pages::page;

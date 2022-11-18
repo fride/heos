@@ -1,6 +1,5 @@
-use maud::{html, Markup};
 use crate::models::zones::{NowPlaying, Zone};
-
+use maud::{html, Markup};
 
 pub fn render_zone(zone: &Zone) -> Markup {
     html!({.zones__zone if=(format!("zone{}", zone.id)){
@@ -41,7 +40,6 @@ pub fn render_zone(zone: &Zone) -> Markup {
     }})
 }
 
-
 pub fn render_zone_now_playing(zone: &Zone) -> Markup {
     html!({
         div class="zones__zone__now-playing" {
@@ -54,20 +52,31 @@ pub fn render_zone_now_playing(zone: &Zone) -> Markup {
 fn render_now_playing(now_playing: &NowPlaying) -> Markup {
     match now_playing {
         NowPlaying::Noting => html!({ (" - ") }),
-        NowPlaying::Station { image_url, station, song, album, artist , .. } =>
-            html!({
-                img src=(image_url) {}
-                p .zones__zone__now-playing__station {
-                    ( station)
-                }
-                p .zones__zone__now-playing__song {
-                    ( song )
-                }
-                p .zones__zone__now-playing__artist {
-                    ( artist )
-                }
-            }),
-        NowPlaying::Song { image_url,song, artist, album, .. } => {
+        NowPlaying::Station {
+            image_url,
+            station,
+            song,
+            artist,
+            ..
+        } => html!({
+            img src=(image_url) {}
+            p .zones__zone__now-playing__station {
+                ( station)
+            }
+            p .zones__zone__now-playing__song {
+                ( song )
+            }
+            p .zones__zone__now-playing__artist {
+                ( artist )
+            }
+        }),
+        NowPlaying::Song {
+            image_url,
+            song,
+            artist,
+            album,
+            ..
+        } => {
             html!({
                 img src=(image_url) {}
                 p .zones__zone__now-playing__song {

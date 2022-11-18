@@ -1,11 +1,11 @@
-use std::time::{Duration, SystemTime};
 use anyhow::Context;
 use axum::extract::Path;
 use axum::handler::Handler;
 use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::{Router, TypedHeader};
-use axum::routing::{get};
 use headers::{ContentType, Expires};
+use std::time::{Duration, SystemTime};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -23,7 +23,8 @@ mod players;
 mod zones;
 
 pub async fn serve(config: Config, driver: HeosDriver) -> anyhow::Result<()> {
-    let app = router(config, driver).fallback(error::code_404.into_service())
+    let app = router(config, driver)
+        .fallback(error::code_404.into_service())
         // See https://docs.rs/tower-http/0.1.1/tower_http/trace/index.html for more details.
         .layer(TraceLayer::new_for_http());
     info!("Got up and running!");
@@ -56,7 +57,8 @@ async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
                 TypedHeader(ContentType::from(data.mime.clone())),
                 TypedHeader(Expires::from(far_expires)),
                 data.content,
-            ).into_response()
+            )
+                .into_response()
         }
         None => error::code_404().await.into_response(),
     }

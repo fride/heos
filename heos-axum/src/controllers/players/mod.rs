@@ -1,12 +1,10 @@
-use axum::{Extension, Router, http::Response};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use maud::html;
+use axum::{Extension, Router};
 use heos_api::HeosDriver;
-use crate::error::AppError;
+use maud::html;
 
-pub async fn show_players(
-    Extension(driver): Extension<HeosDriver>) -> impl IntoResponse {
+pub async fn show_players(Extension(driver): Extension<HeosDriver>) -> impl IntoResponse {
     let players = driver.players();
     html!({
         div {
@@ -19,7 +17,8 @@ pub async fn show_players(
                 }
             }
         }
-    }).into_response()
+    })
+    .into_response()
 }
 
 pub fn router(driver: HeosDriver) -> Router {

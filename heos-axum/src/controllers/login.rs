@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 
-use axum::{Extension, extract::Form, response::Html, Router, routing::get};
 use axum::extract::Query;
-use axum::http::{header, HeaderMap};
+use axum::{extract::Form, routing::get, Extension, Router};
+
 use axum::response::Redirect;
 use maud::{html, Markup};
 use serde::Deserialize;
-use tracing::info;
 
-use heos_api::{HeosDriver, HeosResult};
 use heos_api::error::HeosError;
+use heos_api::HeosDriver;
 
 pub fn router(driver: HeosDriver) -> Router {
     Router::new()
@@ -66,8 +65,12 @@ async fn accept_login(
     Form(mut input): Form<LoginForm>,
 ) -> Result<Redirect, Markup> {
     match driver.login(input.un.clone(), input.pw.clone()).await {
-        Ok(account_state) => Ok(Redirect::temporary("/sources")),
-        Err(HeosError::InvalidCommand { command, eid, text }) => {
+        Ok(_account_state) => Ok(Redirect::temporary("/sources")),
+        Err(HeosError::InvalidCommand {
+            command: _,
+            eid: _,
+            text,
+        }) => {
             input.error = Some(text);
             Err(input.render_html())
         }

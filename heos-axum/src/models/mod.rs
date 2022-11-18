@@ -1,6 +1,5 @@
 use heos_api::types::player::{MediaType, NowPlayingMedia};
 
-
 pub mod zones;
 #[derive(Debug)]
 pub enum TrackName {
@@ -13,8 +12,8 @@ pub enum TrackName {
         artist: String,
         album: String,
         song: String,
-        station: String
-    }
+        station: String,
+    },
 }
 
 impl TrackName {
@@ -23,18 +22,17 @@ impl TrackName {
             MediaType::Song => TrackName::Song {
                 album: now_playing.album.clone(),
                 artist: now_playing.artist.clone(),
-                song: now_playing.song.clone()
+                song: now_playing.song.clone(),
             },
             MediaType::Station => TrackName::Station {
                 album: now_playing.album.clone(),
                 artist: now_playing.artist.clone(),
                 song: now_playing.song.clone(),
-                station: now_playing.station.clone().unwrap_or("".to_string())
-            }
+                station: now_playing.station.clone().unwrap_or("".to_string()),
+            },
         }
     }
 }
-
 
 pub struct NowPlaying(NowPlayingMedia);
 impl NowPlaying {

@@ -1,7 +1,7 @@
 use axum::response::{IntoResponse, Response};
 use maud::{html, Markup};
 
-use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, HeosService, MusicSource};
+use heos_api::types::browse::{BrowsableMedia, HeosService, MusicSource};
 use heos_api::types::SourceId;
 
 use crate::views::browse::render_media_list_item;

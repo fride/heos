@@ -1,5 +1,5 @@
-use maud::{DOCTYPE, html, Markup};
 use crate::templates::statics::*;
+use maud::{html, Markup, DOCTYPE};
 pub mod music_containers;
 pub mod music_sources;
 

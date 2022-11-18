@@ -1,11 +1,8 @@
-use axum::response::{IntoResponse, Response};
 use maud::{html, Markup};
 
-use heos_api::types::{ContainerId, Range, SourceId};
-use heos_api::types::browse::{BroseSourceItem, BrowsableMedia, MusicSource};
 use crate::templates::statics::*;
-
-use crate::views::pages::page;
+use heos_api::types::browse::BrowsableMedia;
+use heos_api::types::SourceId;
 
 pub fn render_media_list_item(item: &BrowsableMedia, source_id: &SourceId) -> Markup {
     let description: Markup = match (&item.artist, &item.album) {
@@ -22,7 +19,7 @@ pub fn render_media_list_item(item: &BrowsableMedia, source_id: &SourceId) -> Ma
             p .name  { (item.name ) }
         }),
     };
-    let image_url  = if item.image_url.is_empty() {
+    let image_url = if item.image_url.is_empty() {
         format!("/assets/{}", &folder_svg.name)
     } else {
         item.image_url.clone()

@@ -1,11 +1,6 @@
-use axum::{
-    Extension,
-    Router, routing::{get, post},
-};
+use axum::{routing::get, Extension, Router};
 
 use heos_api::HeosDriver;
-
-use crate::config::Config;
 
 mod music_container;
 mod music_source;

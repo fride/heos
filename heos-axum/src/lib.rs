@@ -16,8 +16,8 @@ pub mod axum_ructe;
 pub mod config;
 pub mod controllers;
 pub mod error;
-pub mod views;
 pub mod models;
+pub mod views;
 #[derive(Clone)]
 pub struct ApiContext {
     pub driver: HeosDriver,

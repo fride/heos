@@ -23,7 +23,11 @@ impl IntoResponse for AppError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("You found a bug.\n {:#?}", text),
             ),
-            AppError::HeosError(HeosError::InvalidCommand { command, eid, text }) => (
+            AppError::HeosError(HeosError::InvalidCommand {
+                command,
+                eid: _,
+                text,
+            }) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 format!(
                     "Heos is nasty! It failed to execute {}\n {} ",
