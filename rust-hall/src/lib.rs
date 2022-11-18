@@ -1,10 +1,9 @@
 use std::collections::BTreeMap;
-use std::fmt::{Display};
-
+use std::fmt::Display;
 
 use serde::de::Error;
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{Value};
+use serde_json::Value;
 
 #[derive(Clone, Debug)]
 pub struct HalList<A> {

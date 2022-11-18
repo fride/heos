@@ -96,8 +96,6 @@ impl HeosDriver {
         self.api.get_queue(pid, range).await
     }
 
-    // TODO this is a bit slow as the event will come anyways ....
-
     pub async fn create_group<C: IntoIterator<Item = PlayerId>>(
         &self,
         leader: PlayerId,
@@ -105,6 +103,7 @@ impl HeosDriver {
     ) -> HeosResult<()> {
         let members: BTreeSet<PlayerId> = members.into_iter().collect();
         // check if we do a valid request first
+        // otherwise HEOS will borg!
         if let Some(group) = self.groups().iter().find(|g| g.gid == leader) {
             let members_in_group: BTreeSet<PlayerId> = group
                 .players
@@ -120,6 +119,8 @@ impl HeosDriver {
             if members == members_in_group {
                 return Ok(());
             }
+        } else if members.is_empty() {
+            return Ok(());
         }
         let mut group = vec![leader];
         group.extend(members);

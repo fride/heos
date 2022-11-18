@@ -1,5 +1,6 @@
 use axum::response::{IntoResponse, Response};
 
+use crate::views::pages::page;
 use heos_api::types::player::HeosPlayer;
 use heos_api::types::PlayerId;
 use maud::{html, Markup};
@@ -48,24 +49,37 @@ impl EditZoneMembers {
     }
 
     pub fn render_html(&self) -> Markup {
-        html!({
-            form method="post" action=(format!("/zones/{}", self.zone_id)) {
-                h2 { (self.zone_name) }
-                @for member in &self.members {
-                    @let name=format!("{}", member.id);
-                    label for=(name) { (member.name) }
-                    @if member.checked {
-                        input type="checkbox" name=(name) id=(name) checked;
-                    }@else {
-                        input type="checkbox" name=(name) id=(name);
+        let action = format!("/zones/{}", self.zone_id);
+        page(html!({
+            .zone-edit-members {
+                form method="post" action=(action)
+                    hx-post=(action) hx-target="#zones"
+                {
+                    h3 { (self.zone_name) }
+                    @for member in &self.members {
+                        div class="zone-edit-members__member inputGroup" {
+                            @let name=format!("{}", member.id);
+                            @if member.checked {
+                                input type="checkbox" name=(name) id=(name) checked;
+                            }@else {
+                                input type="checkbox" name=(name) id=(name);
+                            }
+                            label for=(name) { (member.name) }
+                        }
+
                     }
-                }
-                input type="submit" value="go";
-                a href="#" {
-                    ("cancel")
+                    .zone-edit-members__footer {
+                        button type="submit" value="go" .button {
+                            ("go")
+                        }
+                        a href="/zones" .button {
+                            ("cancel")
+                        }
+                    }
+
                 }
             }
-        })
+        }))
     }
 }
 

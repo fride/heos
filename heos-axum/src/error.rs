@@ -5,7 +5,6 @@ use tracing::error;
 
 use heos_api::error::HeosError;
 
-
 pub enum AppError {
     HeosError(HeosError),
     InternalError(anyhow::Error),

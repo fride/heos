@@ -15,13 +15,9 @@ impl ZonesPage {
 
     pub fn render_html(&self) -> Markup {
         html!({
-            div .zones{
-                ol {
-                    @for zone in self.zones.iter() {
-                        li {
-                            (render_zone(&zone))
-                        }
-                    }
+            div .zones #zones {
+                @for zone in self.zones.iter() {
+                    (render_zone(&zone))
                 }
             }
         })
@@ -29,17 +25,19 @@ impl ZonesPage {
 }
 
 pub fn render_zone(zone: &Zone) -> Markup {
-    html!({.zones__zone if=(format!("zone{}", zone.id)){
+    html!({
+        .zones__zone id=(format!("zone{}", zone.id)) hx-target="this" hx-swap="outerHTML"
+        {
          .zones__zone__header {
             .zones__zone__header__image {
                 img src=(zone.now_playing_image()) {}
             }
             .zones__zone__header__name  { (zone.name) }
             .zones__zone__header__song  { (zone.now_playing.song()) }
-            .zones__zone__header__artist  { (zone.now_playing.artist()) }
-            .zones__zone__header__album  { (zone.now_playing.album()) }
+            .zones__zone__header__artist { (zone.now_playing.artist()) }
+            .zones__zone__header__album  {  (zone.now_playing.album()) }
             .zones__zone__header__actions {
-                a href=(format!("zones/{}/edit-members", zone.id)) {
+                a href=(format!("zones/{}/edit-members", zone.id)) hx-get=(format!("zones/{}/edit-members", zone.id)) {
                     ( "edit" )
                 }
                 a href="#" {

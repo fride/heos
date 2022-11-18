@@ -16,7 +16,10 @@ pub fn page(contents: Markup) -> Markup {
             script src="https://unpkg.com/htmx.org@1.8.2" integrity="sha384-+8ISc/waZcRdXCLxVgbsLzay31nCdyZXQxnsUy++HJzJliTzxKWr0m1cIEMyUzQu" crossorigin="anonymous" {}
         }
         body {
-            (contents)
+            main .main #main{
+                (contents)
+            }
+
         }
     })
 }
