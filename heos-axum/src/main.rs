@@ -15,7 +15,8 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
     tracing::debug!("listening ");
-    let diver = heos_api::HeosDriver::new("192.168.178.34:1255").await?;
+    let diver = heos_api::find_driver().await?; // HeosDriver::new("heimkino.local:1255").await?;
+                                                // let diver = heos_api::HeosDriver::new("192.168.178.34:1255").await?;
     println!("Got Driver");
     controllers::serve(Config, diver).await?;
     Ok(())

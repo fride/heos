@@ -53,6 +53,10 @@ impl IntoResponse for AppError {
                     "Something went wrong".to_string(),
                 )
             }
+            AppError::HeosError(HeosError::NoDeviceFound) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "No HEOS devices found".to_string(),
+            ),
         };
         (status, error_message).into_response()
     }
