@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 use tracing::error;
 
 use heos_api::error::HeosError;
-use thiserror::Error;
+
 
 pub enum AppError {
     HeosError(HeosError),

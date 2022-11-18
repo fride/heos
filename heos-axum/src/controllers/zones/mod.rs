@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::models::zones::Zones;
+
 use crate::views::pages::page;
 use crate::views::zones::edit::EditZoneMembers;
 use crate::views::zones::listing::ZonesPage;
@@ -9,11 +9,11 @@ use axum::extract::Path;
 use axum::response::{IntoResponse, Redirect};
 use axum::routing::{get, post};
 use axum::{Extension, Form, Router};
-use heos_api::types::group::{Group, GroupRole};
+
 use heos_api::types::player::HeosPlayer;
 use heos_api::types::PlayerId;
 use heos_api::HeosDriver;
-use maud::html;
+
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;

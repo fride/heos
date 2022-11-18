@@ -151,7 +151,7 @@ mod test {
             payload: Default::default(),
             options: Default::default(),
         };
-        let play_mode: PlayerPlayMode = response.try_into().unwrap();
+        let _play_mode: PlayerPlayMode = response.try_into().unwrap();
     }
 
     #[test]
@@ -190,7 +190,7 @@ mod test {
               ]
         });
         let frame: Frame = Frame::from_json(heos_json_response).unwrap();
-        if let Frame::Response(command_response) = frame {
+        if let Frame::Response(_command_response) = frame {
             // let parsed_response :Vec<BroseSourceItem> = command_response.try_into().unwrap();
             // match parsed_response[0] {
             //     BroseSourceItem::HeosServiceOrServer(heos) => {

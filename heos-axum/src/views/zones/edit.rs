@@ -1,5 +1,5 @@
 use axum::response::{IntoResponse, Response};
-use heos_api::types::group::Group;
+
 use heos_api::types::player::HeosPlayer;
 use heos_api::types::PlayerId;
 use maud::{html, Markup};

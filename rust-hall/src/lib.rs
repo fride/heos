@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
-use std::fmt::{format, Display};
-use std::task::Context;
+use std::fmt::{Display};
+
 
 use serde::de::Error;
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value};
 
 #[derive(Clone, Debug)]
 pub struct HalList<A> {
@@ -124,7 +124,7 @@ impl HalResource {
         C: Display,
         D: Into<Link>,
     {
-        let mut link_list = self
+        let link_list = self
             .links
             .entry(format!("{}", name))
             .or_insert(HalList::new());
@@ -133,7 +133,7 @@ impl HalResource {
     }
 
     pub fn with_embedded<A: Into<HalResource>, D: Display>(mut self, name: D, value: A) -> Self {
-        let mut resources = self
+        let resources = self
             .nested
             .entry(name.to_string())
             .or_insert(HalList::new());
@@ -141,11 +141,11 @@ impl HalResource {
         self
     }
     pub fn with_resources<D: Display, A: IntoIterator<Item = HalResource>>(
-        mut self,
+        self,
         name: D,
         resources: A,
     ) -> Self {
-        let mut name = name.to_string();
+        let name = name.to_string();
         resources
             .into_iter()
             .fold(self, |s, resource| s.with_embedded(name.clone(), resource))
