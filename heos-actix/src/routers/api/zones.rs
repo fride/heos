@@ -26,27 +26,20 @@ fn get_zone_links(zone: &Zone, request: &HttpRequest) -> Vec<(String, Link)> {
 
 pub async fn list(req: HttpRequest, driver: web::Data<HeosDriver>) -> HttpResponse {
     let zones: Vec<Zone> = Zone::get_zones(&driver);
-    let zones = zones.into_iter().map(|zone| {
-        HalResource::with_self(req.url_for("zone", &[zone.id().to_string()]).unwrap())
-            .add_object(zone)
-    });
+    let zones = zones
+        .into_iter()
+        .map(|zone| HalResource::with_self(req.url_for("zone", &[zone.id().to_string()]).unwrap()).add_object(zone));
 
     let zones_resource = HalResource::with_self(req.url_for_static("zones").unwrap());
     HttpResponse::Ok().json(zones_resource.with_resources("zones", zones))
 }
 
-pub async fn details(
-    req: HttpRequest,
-    path: Path<i64>,
-    driver: web::Data<HeosDriver>,
-) -> HttpResponse {
+pub async fn details(req: HttpRequest, path: Path<i64>, driver: web::Data<HeosDriver>) -> HttpResponse {
     let player_id = path.into_inner();
     let zones = Zone::get_zones(&driver);
     if let Some(zone) = zones.into_iter().find(|p| p.id() == player_id) {
-        HttpResponse::Ok().json(
-            HalResource::with_self(req.url_for("zone", &[zone.id().to_string()]).unwrap())
-                .add_object(zone),
-        )
+        HttpResponse::Ok()
+            .json(HalResource::with_self(req.url_for("zone", &[zone.id().to_string()]).unwrap()).add_object(zone))
     } else {
         HttpResponse::NotFound().finish()
     }

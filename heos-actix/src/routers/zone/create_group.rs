@@ -28,21 +28,15 @@ impl ZoneEditForm {
     }
 }
 
-pub async fn new(
-    path: web::Path<i64>,
-    params: web::Form<ZoneEditForm>,
-    driver: web::Data<HeosDriver>,
-) -> HttpResponse {
+pub async fn new(path: web::Path<i64>, params: web::Form<ZoneEditForm>, driver: web::Data<HeosDriver>) -> HttpResponse {
     let members_ids = params.member_ids();
     let leader = path.into_inner();
 
     match driver.create_group(leader, members_ids).await {
-        Ok(_) => HttpResponse::SeeOther()
-            .insert_header((LOCATION, "/"))
-            .finish(),
+        Ok(_) => HttpResponse::SeeOther().insert_header((LOCATION, "/")).finish(),
         Err(err) => {
             error!("Grouping players failed! {:?}", &err);
             HttpResponse::InternalServerError().body("Grouping players failed")
-        }
+        },
     }
 }

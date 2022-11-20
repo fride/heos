@@ -31,16 +31,9 @@ impl IntoResponse for AppError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("You found a bug.\n {:#?}", text),
             ),
-            AppError::HeosError(HeosError::InvalidCommand {
-                command,
-                eid: _,
-                text,
-            }) => (
+            AppError::HeosError(HeosError::InvalidCommand { command, eid: _, text }) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                format!(
-                    "Heos is nasty! It failed to execute {}\n {} ",
-                    command, text
-                ),
+                format!("Heos is nasty! It failed to execute {}\n {} ", command, text),
             ),
             AppError::NotFound => (
                 StatusCode::NOT_FOUND,
@@ -48,15 +41,11 @@ impl IntoResponse for AppError {
             ),
             AppError::InternalError(err) => {
                 error!("Well this sucks! {:#?}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Something went wrong".to_string(),
-                )
-            }
-            AppError::HeosError(HeosError::NoDeviceFound) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "No HEOS devices found".to_string(),
-            ),
+                (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong".to_string())
+            },
+            AppError::HeosError(HeosError::NoDeviceFound) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "No HEOS devices found".to_string())
+            },
         };
         (status, error_message).into_response()
     }

@@ -10,14 +10,13 @@ pub struct HalList<A> {
     contents: Vec<A>,
 }
 
+// TODO make this a ...
 impl<A> HalList<A>
 where
     A: Sized + Clone,
 {
     pub fn new() -> Self {
-        Self {
-            contents: Vec::new(),
-        }
+        Self { contents: Vec::new() }
     }
     pub fn with(mut self, value: A) -> Self {
         self.contents.push(value);
@@ -62,12 +61,12 @@ where
     {
         let value: Value = serde::Deserialize::deserialize(deserializer)?;
         if value.is_array() {
-            let values: Vec<T> = serde_json::from_value(value)
-                .map_err(|err| D::Error::custom(format!("JSON Error: {:?}", err)))?;
+            let values: Vec<T> =
+                serde_json::from_value(value).map_err(|err| D::Error::custom(format!("JSON Error: {:?}", err)))?;
             Ok(values.into())
         } else {
-            let value: T = serde_json::from_value(value)
-                .map_err(|err| D::Error::custom(format!("JSON Error: {:?}", err)))?;
+            let value: T =
+                serde_json::from_value(value).map_err(|err| D::Error::custom(format!("JSON Error: {:?}", err)))?;
             Ok(HalList::new().with(value))
         }
     }
@@ -79,11 +78,17 @@ pub struct HalResource {
     links: BTreeMap<String, HalList<Link>>,
     #[serde(flatten)]
     values: BTreeMap<String, Value>,
+
     #[serde(rename = "_nested")]
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     nested: BTreeMap<String, HalList<HalResource>>,
 }
 
 impl HalResource {
+    pub fn to_json(self) -> Value {
+        serde_json::to_value(self).unwrap()
+    }
+
     pub fn with_self<A: Display>(self_link: A) -> Self {
         let link = Link::href(self_link);
         Self {
@@ -123,44 +128,21 @@ impl HalResource {
         C: Display,
         D: Into<Link>,
     {
-        let link_list = self
-            .links
-            .entry(format!("{}", name))
-            .or_insert(HalList::new());
+        let link_list = self.links.entry(format!("{}", name)).or_insert(HalList::new());
         link_list.push(link.into());
         self
     }
 
     pub fn with_embedded<A: Into<HalResource>, D: Display>(mut self, name: D, value: A) -> Self {
-        let resources = self
-            .nested
-            .entry(name.to_string())
-            .or_insert(HalList::new());
+        let resources = self.nested.entry(name.to_string()).or_insert(HalList::new());
         resources.push(value.into());
         self
     }
-    pub fn with_resources<D: Display, A: IntoIterator<Item = HalResource>>(
-        self,
-        name: D,
-        resources: A,
-    ) -> Self {
+    pub fn with_resources<D: Display, A: IntoIterator<Item = HalResource>>(self, name: D, resources: A) -> Self {
         let name = name.to_string();
         resources
             .into_iter()
             .fold(self, |s, resource| s.with_embedded(name.clone(), resource))
-    }
-}
-
-fn merge(a: &mut Value, b: &Value) {
-    match (a, b) {
-        (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
-            for (k, v) in b {
-                merge(a.entry(k.clone()).or_insert(Value::Null), v);
-            }
-        }
-        (a, b) => {
-            *a = b.clone();
-        }
     }
 }
 

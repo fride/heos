@@ -1,15 +1,13 @@
-use std::sync::Arc;
 use axum::extract::Path;
 use axum::Extension;
+use std::sync::Arc;
 
+use crate::controllers::BaseUrl;
 use heos_api::types::browse::BroseSourceItem;
 use heos_api::HeosDriver;
-use crate::controllers::BaseUrl;
 
 use crate::error::AppError;
-use crate::views::pages::music_sources::{
-    BrowseMusicSourcePage, MusicSourcesPages, SourceDetailsPage,
-};
+use crate::views::pages::music_sources::{BrowseMusicSourcePage, MusicSourcesPages, SourceDetailsPage};
 
 pub async fn source_details(
     Path(source_id): Path<i64>,

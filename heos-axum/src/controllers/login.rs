@@ -73,10 +73,10 @@ async fn accept_login(
         }) => {
             input.error = Some(text);
             Err(input.render_html())
-        }
+        },
         Err(_) => {
             input.error = Some("Something went wrong!".to_string());
             Err(input.render_html())
-        }
+        },
     }
 }

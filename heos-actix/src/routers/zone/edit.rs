@@ -11,10 +11,7 @@ pub struct ZoneMemberModel {
     pub name: String,
     pub selected: bool,
 }
-pub async fn edit_zone_members_form(
-    path: Path<i64>,
-    driver: web::Data<HeosDriver>,
-) -> HttpResponse {
+pub async fn edit_zone_members_form(path: Path<i64>, driver: web::Data<HeosDriver>) -> HttpResponse {
     let zone_id = path.into_inner();
     let players = driver.players();
     let zones = Zone::get_zones(&driver);

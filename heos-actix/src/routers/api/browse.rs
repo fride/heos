@@ -1,6 +1,4 @@
-use crate::views::browse::{
-    BrowseContainerResource, BrowseMusicSourcesResource, MusicSourceContentsResource,
-};
+use crate::views::browse::{BrowseContainerResource, BrowseMusicSourcesResource, MusicSourceContentsResource};
 use crate::views::ToHttpResponse;
 use actix_web::error::InternalError;
 use actix_web::http::StatusCode;
@@ -35,11 +33,7 @@ pub async fn details(
 }
 
 // here it gets ugly!
-pub async fn container(
-    req: HttpRequest,
-    path: Path<(i64, String)>,
-    driver: web::Data<HeosDriver>,
-) -> HttpResponse {
+pub async fn container(req: HttpRequest, path: Path<(i64, String)>, driver: web::Data<HeosDriver>) -> HttpResponse {
     let (source_id, container_id) = path.into_inner();
     let music_sources = driver
         .browse_music_containers(&source_id, &container_id, &Range::default())

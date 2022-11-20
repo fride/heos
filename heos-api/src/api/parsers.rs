@@ -83,8 +83,8 @@ impl TryFrom<CommandResponse> for BrowseMusicContainerResponse {
     type Error = HeosError;
 
     fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
-        let params: BrowseMusicContainerParameters = qs::from_str(&value.message)
-            .with_context(|| format!("failed to parse response: {}", &value.message))?;
+        let params: BrowseMusicContainerParameters =
+            qs::from_str(&value.message).with_context(|| format!("failed to parse response: {}", &value.message))?;
         let items = serde_json::from_value(value.payload)
             .with_context(|| format!("failed to parse response: {}", &value.message))?;
         Ok(BrowseMusicContainerResponse {

@@ -12,13 +12,10 @@ use crate::types::browse::{BroseSourceItem, BrowseMusicContainerResponse, MusicS
 use crate::types::event::HeosEvent;
 use crate::types::group::{GroupInfo, GroupVolume};
 use crate::types::player::{
-    NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState,
-    PlayerVolume, QueueEntry,
+    NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState, PlayerVolume, QueueEntry,
 };
 use crate::types::system::AccountState;
-use crate::types::{
-    ContainerId, GroupId, Level, OnOrOff, PlayMode, PlayerId, Range, SourceId, Success,
-};
+use crate::types::{ContainerId, GroupId, Level, OnOrOff, PlayMode, PlayerId, Range, SourceId, Success};
 use crate::{HeosError, HeosResult};
 
 mod parsers;
@@ -86,11 +83,7 @@ impl HeosApi {
         self.execute_command(format!("player/get_play_state?pid={pid}", pid = player_id))
             .await
     }
-    pub async fn set_play_state(
-        &self,
-        player_id: PlayerId,
-        play_state: PlayState,
-    ) -> HeosResult<PlayerPlayState> {
+    pub async fn set_play_state(&self, player_id: PlayerId, play_state: PlayState) -> HeosResult<PlayerPlayState> {
         self.execute_command(format!(
             "player/set_play_state?pid={pid}&state={state}",
             pid = player_id,
@@ -100,10 +93,7 @@ impl HeosApi {
     }
 
     // todo this may return nothing.
-    pub async fn get_now_playing_media(
-        &self,
-        player_id: &PlayerId,
-    ) -> HeosResult<Option<NowPlayingMedia>> {
+    pub async fn get_now_playing_media(&self, player_id: &PlayerId) -> HeosResult<Option<NowPlayingMedia>> {
         self.execute_command(format!("player/get_now_playing_media?pid={}", player_id))
             .await
     }
@@ -140,11 +130,7 @@ impl HeosApi {
             .await
     }
 
-    pub async fn set_play_mode(
-        &self,
-        player_id: &PlayerId,
-        mode: PlayMode,
-    ) -> HeosResult<PlayerPlayMode> {
+    pub async fn set_play_mode(&self, player_id: &PlayerId, mode: PlayMode) -> HeosResult<PlayerPlayMode> {
         self.execute_command(format!(
             "player/set_play_mode?pid={pid}&repeat={repeat}&shuffle={shuffle}",
             pid = player_id,
@@ -153,11 +139,7 @@ impl HeosApi {
         ))
         .await
     }
-    pub async fn get_queue(
-        &self,
-        player_id: PlayerId,
-        range: Range,
-    ) -> HeosResult<Vec<QueueEntry>> {
+    pub async fn get_queue(&self, player_id: PlayerId, range: Range) -> HeosResult<Vec<QueueEntry>> {
         self.execute_command(format!(
             "player/get_queue?pid={pid}&range={start},{end}",
             pid = player_id,
@@ -184,14 +166,9 @@ impl HeosApi {
     }
 
     pub async fn get_group_volume(&self, group_id: GroupId) -> HeosResult<GroupVolume> {
-        self.execute_command(format!("group/get_volume?gid={}", group_id))
-            .await
+        self.execute_command(format!("group/get_volume?gid={}", group_id)).await
     }
-    pub async fn set_group_volume(
-        &self,
-        group_id: GroupId,
-        level: Level,
-    ) -> HeosResult<GroupVolume> {
+    pub async fn set_group_volume(&self, group_id: GroupId, level: Level) -> HeosResult<GroupVolume> {
         self.execute_command(format!(
             "player/set_volume?pid={pid}&level={level}",
             pid = group_id,
@@ -201,9 +178,7 @@ impl HeosApi {
     }
 
     pub async fn browse_music_sources(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>> {
-        let music_sources = self
-            .execute_command(format!("browse/browse?sid={}", sid))
-            .await?;
+        let music_sources = self.execute_command(format!("browse/browse?sid={}", sid)).await?;
         Ok(music_sources)
     }
 
@@ -231,20 +206,17 @@ impl HeosApi {
         // TODO whenever I do have the time make this so that it only create one connection! ;)
         tokio::spawn(async move {
             loop {
-                let event = connection
-                    .read_event()
-                    .await
-                    .and_then(|event| response_to_event(event));
+                let event = connection.read_event().await.and_then(|event| response_to_event(event));
                 match event {
                     Ok(event) => {
                         if let Err(_) = s.send(event).await {
                             break;
                         }
-                    }
+                    },
                     Err(e) => {
                         error!("failed to fetch event. {:?}", e);
                         break;
-                    }
+                    },
                 }
             }
         });

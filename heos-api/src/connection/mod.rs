@@ -73,9 +73,7 @@ impl Connection {
     // }
 
     pub async fn connect<T: ToSocketAddrs>(s: T) -> HeosResult<Connection> {
-        let stream = TcpStream::connect(s)
-            .await
-            .context("Could not connect to device")?;
+        let stream = TcpStream::connect(s).await.context("Could not connect to device")?;
         let peer_addr = stream.peer_addr().context("Failed to ask remote address")?;
         info!("connected to device :{:?}", &peer_addr);
         Ok(Connection {
@@ -96,9 +94,7 @@ impl Connection {
             .get_ref()
             .peer_addr()
             .context("Failed to clone connection to device ")?;
-        let stream = TcpStream::connect(addr)
-            .await
-            .context("Failed to connect to device ")?;
+        let stream = TcpStream::connect(addr).await.context("Failed to connect to device ")?;
         Ok(Connection {
             stream: BufWriter::new(stream),
             // Default to a 4KB read buffer.
@@ -124,10 +120,7 @@ impl Connection {
     //     }
     // }
 
-    pub async fn execute_command<D: Display>(
-        &mut self,
-        command: D,
-    ) -> crate::HeosResult<CommandResponse> {
+    pub async fn execute_command<D: Display>(&mut self, command: D) -> crate::HeosResult<CommandResponse> {
         let command = command.to_string();
         let payload = format!("heos://{}\r\n", &command);
         info!("Sending command: {}", &command);
@@ -150,7 +143,7 @@ impl Connection {
             match response {
                 Some(Frame::Event(event)) => return Ok(event),
                 _ => { // nop
-                }
+                },
             }
         }
     }
@@ -161,11 +154,11 @@ impl Connection {
                 // this has to be upfront!?
                 Some(Frame::UnderProcess(command)) => {
                     debug!(">> waiting for {} to finish.", &command);
-                }
+                },
                 Some(Frame::Response(command)) => return Ok(command),
                 Some(Frame::Error(error)) => return Err(error),
                 _ => { // nop
-                }
+                },
             }
         }
     }
@@ -207,9 +200,7 @@ impl Connection {
                 if self.buffer.is_empty() {
                     return Ok(None);
                 } else {
-                    return Err(
-                        anyhow!("Failed to read from Heos. Connection reset by peer").into(),
-                    );
+                    return Err(anyhow!("Failed to read from Heos. Connection reset by peer").into());
                 }
             }
         }
@@ -257,7 +248,7 @@ impl Connection {
 
                 // Return the parsed frame to the caller.
                 Ok(Some(frame))
-            }
+            },
             // There is not enough data present in the read buffer to parse a
             // single frame. We must wait for more data to be received from the
             // socket. Reading from the socket will be done in the statement

@@ -19,7 +19,7 @@ fn get_source_link(parent_id: &SourceId, source: &BroseSourceItem) -> String {
         BroseSourceItem::BrowsableMedia(ms) => media_url(&ms, &parent_id),
         BroseSourceItem::HeosService(hs) => {
             format!("/api/browse/{}/", &hs.sid)
-        }
+        },
     }
 }
 
@@ -77,11 +77,9 @@ impl ToHttpResponse for BrowseMusicSourcesResource {
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
         let mut resource = HalResource::with_self(req.url_for_static("music_sources").unwrap());
         let response = self.0.iter().cloned().fold(resource, |hal, music_source| {
-            let embedded = HalResource::with_self(
-                req.url_for("music_source", &[music_source.sid.to_string()])
-                    .unwrap(),
-            )
-            .add_object(music_source);
+            let embedded =
+                HalResource::with_self(req.url_for("music_source", &[music_source.sid.to_string()]).unwrap())
+                    .add_object(music_source);
             hal.with_embedded("music_sources", embedded)
         });
         HttpResponse::Ok().json(response)
@@ -131,12 +129,10 @@ impl ToHttpResponse for MusicSourceContentsResource {
     }
 
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
-        let mut resource =
-            HalResource::with_self(req.url_for("music_sources", [self.0.to_string()]).unwrap());
+        let mut resource = HalResource::with_self(req.url_for("music_sources", [self.0.to_string()]).unwrap());
         let parent_id = self.0.clone();
         let response = self.1.iter().cloned().fold(resource, |hal, music_source| {
-            let embedded = HalResource::with_self(get_source_link(&parent_id, &music_source))
-                .add_object(music_source);
+            let embedded = HalResource::with_self(get_source_link(&parent_id, &music_source)).add_object(music_source);
             hal.with_embedded("music_sources", embedded)
         });
         HttpResponse::Ok().json(response)
@@ -150,11 +146,7 @@ pub struct BrowseContainerResource {
 }
 
 impl BrowseContainerResource {
-    pub fn new(
-        source_id: SourceId,
-        container_id: ContainerId,
-        media: Vec<BrowsableMedia>,
-    ) -> BrowseContainerResource {
+    pub fn new(source_id: SourceId, container_id: ContainerId, media: Vec<BrowsableMedia>) -> BrowseContainerResource {
         Self {
             source_id,
             container_id,
@@ -180,18 +172,11 @@ impl ToHttpResponse for BrowseContainerResource {
     }
 
     fn to_json(&self, req: &HttpRequest) -> HttpResponse {
-        let mut resource = HalResource::with_self(
-            req.url_for("music_sources", [self.source_id.to_string()])
-                .unwrap(),
-        );
-        let response = self
-            .media
-            .iter()
-            .cloned()
-            .fold(resource, |hal, music_source| {
-                let embedded = HalResource::with_self("").add_object(music_source);
-                hal.with_embedded("service", embedded)
-            });
+        let mut resource = HalResource::with_self(req.url_for("music_sources", [self.source_id.to_string()]).unwrap());
+        let response = self.media.iter().cloned().fold(resource, |hal, music_source| {
+            let embedded = HalResource::with_self("").add_object(music_source);
+            hal.with_embedded("service", embedded)
+        });
         HttpResponse::Ok().json(response)
     }
 }

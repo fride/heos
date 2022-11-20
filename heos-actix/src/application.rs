@@ -8,8 +8,8 @@ use tracing_actix_web::TracingLogger;
 use crate::configuration::Settings;
 use crate::routers::{api, music_source};
 use crate::routers::{
-    health_check, home, main_css, zone::details, zone::edit_zone_members_form,
-    zone::list as list_zones, zone::new as new_zone,
+    health_check, home, main_css, zone::details, zone::edit_zone_members_form, zone::list as list_zones,
+    zone::new as new_zone,
 };
 
 pub struct Application {
@@ -20,20 +20,13 @@ pub struct Application {
 
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
-        let address = format!(
-            "{}:{}",
-            configuration.application.host, configuration.application.port
-        );
+        let address = format!("{}:{}", configuration.application.host, configuration.application.port);
         let heos_address = format!("{}:{}", configuration.heos.host, 1255);
         let listener = TcpListener::bind(&address)?;
         let driver = heos_api::HeosDriver::new(heos_address).await?;
         let port = listener.local_addr().unwrap().port();
         let server = run(listener, configuration.application.base_url, driver.clone()).await?;
-        Ok(Self {
-            port,
-            server,
-            driver,
-        })
+        Ok(Self { port, server, driver })
     }
 
     pub fn port(&self) -> u16 {
@@ -45,11 +38,7 @@ impl Application {
     }
 }
 
-async fn run(
-    listener: TcpListener,
-    base_url: String,
-    driver: HeosDriver,
-) -> Result<Server, anyhow::Error> {
+async fn run(listener: TcpListener, base_url: String, driver: HeosDriver) -> Result<Server, anyhow::Error> {
     let driver = Data::new(driver);
     let server = HttpServer::new(move || {
         App::new()

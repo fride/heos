@@ -23,7 +23,7 @@ impl<T: FnOnce(&mut Vec<u8>) -> std::io::Result<()>> IntoResponse for RenderTemp
             Err(_e) => {
                 // TODO: logging
                 (StatusCode::INTERNAL_SERVER_ERROR, "Render failed").into_response()
-            }
+            },
         }
     }
 }

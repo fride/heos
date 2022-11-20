@@ -7,12 +7,7 @@ pub fn routes() -> Scope {
     web::scope("/api")
         .service(
             web::scope("/zones")
-                .service(
-                    web::resource("")
-                        .name("zones")
-                        .guard(guard::Get())
-                        .to(zones::list),
-                )
+                .service(web::resource("").name("zones").guard(guard::Get()).to(zones::list))
                 .service(
                     web::resource("/{zone_id}")
                         .name("zone")

@@ -24,7 +24,7 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
     match outcome {
         Ok(Ok(())) => {
             tracing::info!("{} has exited", task_name)
-        }
+        },
         Ok(Err(e)) => {
             tracing::error!(
                 error.cause_chain = ?e,
@@ -32,7 +32,7 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
                 "{} failed",
                 task_name
             )
-        }
+        },
         Err(e) => {
             tracing::error!(
                 error.cause_chain = ?e,
@@ -40,6 +40,6 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
                 "{}' task failed to complete",
                 task_name
             )
-        }
+        },
     }
 }

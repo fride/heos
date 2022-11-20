@@ -20,11 +20,7 @@ where
     D: serde::Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
-    if s == "true" {
-        Ok(true)
-    } else {
-        Ok(false)
-    }
+    if s == "true" { Ok(true) } else { Ok(false) }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

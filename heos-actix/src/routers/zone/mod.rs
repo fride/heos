@@ -24,19 +24,12 @@ pub async fn list(_req: HttpRequest, driver: web::Data<HeosDriver>) -> HttpRespo
         .body(html.into_string())
 }
 
-pub async fn details(
-    _req: HttpRequest,
-    path: Path<i64>,
-    driver: web::Data<HeosDriver>,
-) -> HttpResponse {
+pub async fn details(_req: HttpRequest, path: Path<i64>, driver: web::Data<HeosDriver>) -> HttpResponse {
     let player_id = path.into_inner();
     let zones = Zone::get_zones(&driver);
     if let Some(zone) = zones.into_iter().find(|p| p.id() == player_id) {
         let sources = driver.music_sources();
-        let queue = driver
-            .get_player_queue(player_id, Range::default())
-            .await
-            .unwrap();
+        let queue = driver.get_player_queue(player_id, Range::default()).await.unwrap();
         let html = zone_detail_page(zone, sources, queue);
         HttpResponse::Ok()
             .content_type(ContentType::html())

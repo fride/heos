@@ -114,6 +114,6 @@ fn render_now_playing(now_playing: &NowPlaying) -> Markup {
                     ( album )
                 }
             })
-        }
+        },
     }
 }

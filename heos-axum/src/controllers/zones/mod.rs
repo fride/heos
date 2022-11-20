@@ -8,20 +8,29 @@ use anyhow::Context;
 use axum::extract::Path;
 use axum::response::{IntoResponse, Redirect};
 use axum::routing::{get, post};
-use axum::{Extension, Form, Router};
+use axum::{Extension, Form, Json, Router, TypedHeader};
 
 use heos_api::types::player::HeosPlayer;
 use heos_api::types::PlayerId;
 use heos_api::HeosDriver;
 
+use crate::axum_hal::HalJson;
+use crate::models::zones::Zones;
+use axum::http::{header, HeaderMap};
+use headers::AcceptRanges;
+use rust_hall::HalResource;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;
 
-pub async fn show_zones(Extension(driver): Extension<HeosDriver>) -> impl IntoResponse {
-    let _groups = driver.groups();
-    let pages = ZonesPage::new(driver.players(), driver.groups());
-    page(pages.render_html())
+pub async fn show_zones(headers: HeaderMap, Extension(driver): Extension<HeosDriver>) -> impl IntoResponse {
+    let zones = Zones::new(driver.players(), driver.groups());
+    match headers.get(header::ACCEPT).map(|x| x.as_bytes()) {
+        Some(b"application/json") => HalJson::new(zones.into()).into_response(),
+        _ => ZonesPage::new(driver.players(), driver.groups())
+            .render_html()
+            .into_response(),
+    }
 }
 
 pub async fn show_edit_zone_members(
@@ -30,11 +39,7 @@ pub async fn show_edit_zone_members(
 ) -> Result<EditZoneMembers, AppError> {
     info!("Start show_edit_zone_members");
     info!("Found group to edit");
-    let mut players: BTreeMap<i64, HeosPlayer> = driver
-        .players()
-        .into_iter()
-        .map(|p| (p.player_id, p))
-        .collect();
+    let mut players: BTreeMap<i64, HeosPlayer> = driver.players().into_iter().map(|p| (p.player_id, p)).collect();
     let player_to_edit = players.remove(&zone_id).ok_or(AppError::NotFound)?;
     let page = EditZoneMembers::new(player_to_edit, players.into_values());
     info!("Page: {:?}", &page.members);
@@ -51,14 +56,15 @@ impl ChangeZoneMemberForm {
     pub fn get_selected_player_ids(&self) -> Result<Vec<PlayerId>, AppError> {
         let mut pids = vec![];
         for (key, _) in &self.members {
-            let pid = key.parse().map_err(|e| {
-                AppError::InternalError(anyhow!("Failed to parse {} as number", &e))
-            })?;
+            let pid = key
+                .parse()
+                .map_err(|e| AppError::InternalError(anyhow!("Failed to parse {} as number", &e)))?;
             pids.push(pid);
         }
         Ok(pids)
     }
 }
+
 pub async fn change_zone_members(
     Path(zone_id): Path<i64>,
     Form(form): Form<ChangeZoneMemberForm>,
