@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use axum::extract::Path;
 use axum::Extension;
 
 use heos_api::types::browse::BroseSourceItem;
 use heos_api::HeosDriver;
+use crate::controllers::BaseUrl;
 
 use crate::error::AppError;
 use crate::views::pages::music_sources::{
@@ -23,10 +25,11 @@ pub async fn source_details(
 
 pub async fn list_music_sources(
     Extension(driver): Extension<HeosDriver>,
+    Extension(baseUrl): Extension<Arc<BaseUrl>>,
 ) -> Result<MusicSourcesPages, AppError> {
     let music_sources = driver.music_sources();
     Ok(MusicSourcesPages {
-        base_uri: "http://localhost:8080".to_string(),
+        base_uri: baseUrl.as_str().to_string(),
         music_sources,
     })
 }

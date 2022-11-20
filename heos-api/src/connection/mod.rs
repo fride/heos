@@ -76,8 +76,8 @@ impl Connection {
         let stream = TcpStream::connect(s)
             .await
             .context("Could not connect to device")?;
-        println!("connected to device :{:?}", &stream);
         let peer_addr = stream.peer_addr().context("Failed to ask remote address")?;
+        info!("connected to device :{:?}", &peer_addr);
         Ok(Connection {
             stream: BufWriter::new(stream),
             // Default to a 4KB read buffer.

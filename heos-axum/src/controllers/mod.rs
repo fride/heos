@@ -1,3 +1,4 @@
+use std::net::{IpAddr, Ipv4Addr};
 use anyhow::Context;
 use axum::extract::Path;
 use axum::handler::Handler;
@@ -6,6 +7,8 @@ use axum::routing::get;
 use axum::{Router, TypedHeader};
 use headers::{ContentType, Expires};
 use std::time::{Duration, SystemTime};
+use clap::builder::Str;
+use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -22,21 +25,36 @@ mod login;
 mod players;
 mod zones;
 
+#[derive(Clone)]
+pub struct BaseUrl(String);
+
+impl BaseUrl {
+    pub fn new(base_url: String) -> Self {
+        BaseUrl(base_url)
+    }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 pub async fn serve(config: Config, driver: HeosDriver) -> anyhow::Result<()> {
-    let app = router(config, driver)
+    let app = router(&config, driver)
         .fallback(error::code_404.into_service())
         // See https://docs.rs/tower-http/0.1.1/tower_http/trace/index.html for more details.
         .layer(TraceLayer::new_for_http());
-    info!("Got up and running!");
-    axum::Server::bind(&"0.0.0.0:8080".parse()?)
+
+    let local_addr = &config.get_local_addr();
+    info!("Listening on {}", &local_addr);
+    axum::Server::bind(local_addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .context("error running HTTP server")
 }
 
-fn router(_config: Config, driver: HeosDriver) -> Router {
+fn router(config: &Config, driver: HeosDriver) -> Router {
     // This is the order that the modules were authored in.
-    browse::router(driver.clone())
+    browse::router(driver.clone(), &config)
         .route("/assets/:filename", get(static_files))
         .merge(login::router(driver.clone()))
         .merge(players::router(driver.clone()))
@@ -62,4 +80,30 @@ async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
         }
         None => error::code_404().await.into_response(),
     }
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+        let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    info!("signal received, starting graceful shutdown");
 }

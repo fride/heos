@@ -60,21 +60,20 @@
 
         # Also run the crate tests under cargo-tarpaulin so that we can keep
         # track of code coverage
-        heosd-coverage = craneLib.cargoTarpaulin( commonArgs // {
-          inherit cargoArtifacts src;
-        });
-        configuration = ./configuration;
+#        heosd-coverage = craneLib.cargoTarpaulin( commonArgs // {
+#          inherit cargoArtifacts src;
+#        });
       in
       {
         defaultPackage = heosd;
         # Add the config directory
-        configuration = configuration;
+        # configuration = configuration;
         checks = {
          inherit
            # Build the crate as part of `nix flake check` for convenience
            heosd
-           heosd-clippy
-           heosd-coverage;
+           heosd-clippy;
+#           heosd-coverage;
         };
       });
 }

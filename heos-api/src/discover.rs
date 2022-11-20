@@ -3,16 +3,16 @@ use tokio_stream::StreamExt;
 use std::net::IpAddr;
 use std::str::FromStr;
 use anyhow::{anyhow, Context};
-use ssdp_client::{SearchTarget, URN};
+use ssdp_client::{SearchTarget};
 use tracing::info;
 use crate::error::HeosError;
 use crate::HeosResult;
-use url::{Url, ParseError};
+use url::{Url};
 
 pub async fn find_heos_devices() -> HeosResult<IpAddr>{
     info!("Searching for heos devices");
     let search_target = SearchTarget::from_str("urn:schemas-denon-com:device:ACT-Denon:1").unwrap();
-    let mut responses = ssdp_client::search(&search_target, Duration::from_secs(3), 2)
+    let mut responses = ssdp_client::search(&search_target, Duration::from_secs(15), 2)
         .await
         .context("Failed to query for upnp devices")?;
 
