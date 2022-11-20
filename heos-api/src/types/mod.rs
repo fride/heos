@@ -17,15 +17,46 @@ pub type ContainerId = String;
 pub type Level = u8;
 pub type Milliseconds = u64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Range {
     pub start: u16,
     pub end: u16,
 }
 
+impl Range {
+    pub fn length(&self) -> u16 {
+        self.end - self.start
+    }
+
+    pub fn previous(&self) -> Option<Self> {
+        if self.start == 0 {
+            None
+        } else if self.length() > self.start {
+            Some(Range {
+                start: self.start - self.length(),
+                end: self.end,
+            })
+        } else {
+            Some(Range {
+                start: 0,
+                end: self.end,
+            })
+        }
+    }
+    pub fn next(&self) -> Self {
+        Range {
+            start: self.end,
+            end: self.end + self.length(),
+        }
+    }
+    pub fn as_query_str(&self) -> String {
+        format!("start={}&end={}", self.start, self.end)
+    }
+}
+
 impl Default for Range {
     fn default() -> Self {
-        Range { start: 0, end: 100 }
+        Range { start: 0, end: 10 }
     }
 }
 
@@ -155,7 +186,6 @@ impl fmt::Display for Shuffle {
         )
     }
 }
-
 
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum HeosErrorCode {

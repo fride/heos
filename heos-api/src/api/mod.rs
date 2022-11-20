@@ -8,15 +8,18 @@ use tracing::{error, info};
 use parsers::*;
 
 use crate::connection::{CommandResponse, Connection};
-use crate::types::browse::MusicSource;
+use crate::types::browse::{BroseSourceItem, BrowseMusicContainerResponse, MusicSource};
+use crate::types::event::HeosEvent;
 use crate::types::group::{GroupInfo, GroupVolume};
 use crate::types::player::{
     NowPlayingMedia, PlayState, PlayerInfo, PlayerMute, PlayerPlayMode, PlayerPlayState,
     PlayerVolume, QueueEntry,
 };
-use crate::types::{GroupId, Level, OnOrOff, PlayMode, PlayerId, Range, Success};
+use crate::types::system::AccountState;
+use crate::types::{
+    ContainerId, GroupId, Level, OnOrOff, PlayMode, PlayerId, Range, SourceId, Success,
+};
 use crate::{HeosError, HeosResult};
-use crate::types::event::HeosEvent;
 
 mod parsers;
 
@@ -55,9 +58,9 @@ impl HeosApi {
         Self(s, peer_addr)
     }
     async fn execute_command<A, B>(&self, command: A) -> HeosResult<B>
-        where
-            A: Display + Send,
-            B: TryFrom<CommandResponse, Error = HeosError>,
+    where
+        A: Display + Send,
+        B: TryFrom<CommandResponse, Error = HeosError>,
     {
         let command = format!("{}", command);
         tracing::debug!("executing command: {}", &command);
@@ -66,6 +69,13 @@ impl HeosApi {
         let response = r.await.expect("Failed to receive response")?;
         tracing::debug!("Got Response: {}", &response);
         response.try_into()
+    }
+
+    pub async fn login(&self, un: String, pw: String) -> HeosResult<AccountState> {
+        let res: AccountState = self
+            .execute_command(format!("system/sign_in?un={}&pw={}", un, pw))
+            .await?;
+        Ok(res)
     }
 
     pub async fn get_player_infos(&self) -> HeosResult<Vec<PlayerInfo>> {
@@ -86,11 +96,14 @@ impl HeosApi {
             pid = player_id,
             state = play_state
         ))
-            .await
+        .await
     }
 
     // todo this may return nothing.
-    pub async fn get_now_playing_media(&self, player_id: &PlayerId) -> HeosResult<Option<NowPlayingMedia>> {
+    pub async fn get_now_playing_media(
+        &self,
+        player_id: &PlayerId,
+    ) -> HeosResult<Option<NowPlayingMedia>> {
         self.execute_command(format!("player/get_now_playing_media?pid={}", player_id))
             .await
     }
@@ -107,7 +120,7 @@ impl HeosApi {
             pid = player_id,
             level = level
         ))
-            .await
+        .await
     }
 
     pub async fn get_mute(&self, player_id: PlayerId) -> HeosResult<PlayerMute> {
@@ -120,7 +133,7 @@ impl HeosApi {
             pid = player_id,
             state = state
         ))
-            .await
+        .await
     }
     pub async fn get_play_mode(&self, player_id: &PlayerId) -> HeosResult<PlayerPlayMode> {
         self.execute_command(format!("player/get_play_mode?pid={pid}", pid = player_id))
@@ -138,7 +151,7 @@ impl HeosApi {
             repeat = mode.repeat,
             shuffle = mode.shuffle
         ))
-            .await
+        .await
     }
     pub async fn get_queue(
         &self,
@@ -151,14 +164,13 @@ impl HeosApi {
             start = range.start,
             end = range.end
         ))
-            .await
+        .await
     }
 
     pub async fn get_groups(&self) -> HeosResult<Vec<GroupInfo>> {
         self.execute_command("group/get_groups").await
     }
     pub async fn set_group(&self, players: Vec<PlayerId>) -> HeosResult<()> {
-
         let pids = players
             .into_iter()
             .map(|pid| pid.to_string())
@@ -185,7 +197,29 @@ impl HeosApi {
             pid = group_id,
             level = level
         ))
-            .await
+        .await
+    }
+
+    pub async fn browse_music_sources(&self, sid: SourceId) -> HeosResult<Vec<BroseSourceItem>> {
+        let music_sources = self
+            .execute_command(format!("browse/browse?sid={}", sid))
+            .await?;
+        Ok(music_sources)
+    }
+
+    pub async fn browse_music_containers(
+        &self,
+        sid: &SourceId,
+        cid: &ContainerId,
+        range: &Range,
+    ) -> HeosResult<BrowseMusicContainerResponse> {
+        let music_sources = self
+            .execute_command(format!(
+                "browse/browse?sid={}&cid={}&range={},{}",
+                sid, cid, range.start, range.end
+            ))
+            .await?;
+        Ok(music_sources)
     }
 
     pub async fn events(&self) -> HeosResult<mpsc::Receiver<HeosEvent>> {

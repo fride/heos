@@ -13,6 +13,8 @@ pub enum HeosError {
         eid: HeosErrorCode,
         text: String,
     },
+    #[error("No HOES devices found in local network")]
+    NoDeviceFound
 }
 // We are still using a bespoke implementation of `Debug`
 // to get a nice report using the error source chain

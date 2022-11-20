@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use anyhow::{anyhow, Context};
 use bytes::Buf;
-use serde_json::Value as Json;
+use serde_json::{Value as Json, Value};
 
 use crate::connection::{CommandResponse, EventResponse};
 use crate::error::HeosError;
@@ -30,10 +30,13 @@ impl Frame {
         if let Ok(line) = get_line(src) {
             let json = serde_json::from_slice::<Json>(line)
                 .context("Failed to parse heos response as json")?;
-            parsers::parse_response(json)
+            Frame::from_json(json)
         } else {
             Err(anyhow!("Connection reset by peer").into())
         }
+    }
+    pub fn from_json(value: Value) -> Result<Self, HeosError> {
+        parsers::parse_response(value)
     }
 }
 
@@ -58,9 +61,8 @@ fn get_line<'a>(src: &mut Cursor<&'a [u8]>) -> Result<&'a [u8], Incomplete> {
 }
 
 mod parsers {
-    use crate::types::HeosErrorCode;
     use crate::error::HeosError::InvalidCommand;
-
+    use crate::types::HeosErrorCode;
 
     use super::*;
 
@@ -133,7 +135,7 @@ mod parsers {
             13 => HeosErrorCode::ProcessingPreviousCommand,
             14 => HeosErrorCode::MediaCantBePlayed,
             15 => HeosErrorCode::OptionNotSupported,
-            _  => HeosErrorCode::Unknown,
+            _ => HeosErrorCode::Unknown,
         }
     }
 
@@ -206,7 +208,7 @@ mod parsers {
 mod tests {
     use serde_json::*;
 
-    use heos_api::types;
+    use crate::types;
 
     use super::*;
 
