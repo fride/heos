@@ -2,6 +2,7 @@ use crate::models::zones::{NowPlaying, Zone, Zones};
 use heos_api::types::group::Group;
 use heos_api::types::player::HeosPlayer;
 use maud::{html, Markup};
+use crate::views::pages::page;
 
 pub struct ZonesPage {
     pub zones: Zones,
@@ -14,13 +15,13 @@ impl ZonesPage {
     }
 
     pub fn render_html(&self) -> Markup {
-        html!({
+        page(html!({
             div .zones #zones {
                 @for zone in self.zones.iter() {
                     (render_zone(&zone))
                 }
             }
-        })
+        }))
     }
 }
 
