@@ -28,8 +28,7 @@ impl Frame {
     }
     pub fn parse(src: &mut Cursor<&[u8]>) -> Result<Frame, HeosError> {
         if let Ok(line) = get_line(src) {
-            let json = serde_json::from_slice::<Json>(line)
-                .context("Failed to parse heos response as json")?;
+            let json = serde_json::from_slice::<Json>(line).context("Failed to parse heos response as json")?;
             Frame::from_json(json)
         } else {
             Err(anyhow!("Connection reset by peer").into())
@@ -142,11 +141,7 @@ mod parsers {
     pub fn parse_response(json: Json) -> Result<Frame, HeosError> {
         let response: HeosReponse =
             serde_json::from_value(json).context("Heos device sent a response I can't parse!")?;
-        match (
-            &response.heos.command,
-            &response.heos.result,
-            &response.heos.message,
-        ) {
+        match (&response.heos.command, &response.heos.result, &response.heos.message) {
             (command, Some(HeosResultState::Failure), message) => {
                 let error_message: ErrorMessage =
                     qs::from_str(message).context("Error message has an invalid format")?;
@@ -155,16 +150,14 @@ mod parsers {
                     eid: parse_eid(error_message.eid),
                     text: error_message.text,
                 }))
-            }
+            },
             (ResponseName::EventName(name), _, message) => Ok(Frame::Event(EventResponse {
                 event_name: name.clone(),
                 message: message.clone(),
             })),
-            (ResponseName::CommandName(name), _, message)
-                if message.starts_with("command under process") =>
-            {
+            (ResponseName::CommandName(name), _, message) if message.starts_with("command under process") => {
                 Ok(Frame::UnderProcess(name.clone()))
-            }
+            },
             (ResponseName::CommandName(name), _, message) => Ok(Frame::Response(CommandResponse {
                 command_name: name.clone(),
                 message: message.clone(),

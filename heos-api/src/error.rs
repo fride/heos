@@ -14,7 +14,7 @@ pub enum HeosError {
         text: String,
     },
     #[error("No HOES devices found in local network")]
-    NoDeviceFound
+    NoDeviceFound,
 }
 // We are still using a bespoke implementation of `Debug`
 // to get a nice report using the error source chain
@@ -24,10 +24,7 @@ impl std::fmt::Debug for HeosError {
     }
 }
 
-fn error_chain_fmt(
-    e: &impl std::error::Error,
-    f: &mut std::fmt::Formatter<'_>,
-) -> std::fmt::Result {
+fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{}\n", e)?;
     let mut current = e.source();
     while let Some(cause) = current {

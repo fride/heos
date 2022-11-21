@@ -1,15 +1,13 @@
-use std::sync::Arc;
 use axum::extract::Path;
 use axum::Extension;
+use std::sync::Arc;
 
+use crate::controllers::BaseUrl;
 use heos_api::types::browse::BroseSourceItem;
 use heos_api::HeosDriver;
-use crate::controllers::BaseUrl;
 
 use crate::error::AppError;
-use crate::views::pages::music_sources::{
-    BrowseMusicSourcePage, MusicSourcesPages, SourceDetailsPage,
-};
+use crate::views::pages::music_sources::{BrowseMusicSourcePage, MusicSourcesPages, SourceDetailsPage};
 
 pub async fn source_details(
     Path(source_id): Path<i64>,
@@ -25,11 +23,11 @@ pub async fn source_details(
 
 pub async fn list_music_sources(
     Extension(driver): Extension<HeosDriver>,
-    Extension(baseUrl): Extension<Arc<BaseUrl>>,
+    Extension(base_url): Extension<Arc<BaseUrl>>,
 ) -> Result<MusicSourcesPages, AppError> {
     let music_sources = driver.music_sources();
     Ok(MusicSourcesPages {
-        base_uri: baseUrl.as_str().to_string(),
+        base_uri: base_url.as_str().to_string(),
         music_sources,
     })
 }

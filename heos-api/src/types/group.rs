@@ -26,10 +26,7 @@ pub struct GroupInfo {
 }
 impl GroupInfo {
     pub fn has_member(&self, player_id: PlayerId) -> bool {
-        self.players
-            .iter()
-            .find(|member| member.pid == player_id)
-            .is_some()
+        self.players.iter().find(|member| member.pid == player_id).is_some()
     }
     pub fn member_ids(&self) -> Vec<PlayerId> {
         self.players.iter().map(|m| m.pid.clone()).collect()
@@ -50,10 +47,8 @@ pub struct GroupMembers {
 
 impl Into<GroupMembers> for GroupInfo {
     fn into(self) -> GroupMembers {
-        let (leader, members): (Vec<GroupMember>, Vec<GroupMember>) = self
-            .players
-            .into_iter()
-            .partition(|m| m.role == GroupRole::Leader);
+        let (leader, members): (Vec<GroupMember>, Vec<GroupMember>) =
+            self.players.into_iter().partition(|m| m.role == GroupRole::Leader);
         GroupMembers {
             leader: leader.into_iter().next().expect("no leader in group"),
             members,
@@ -109,10 +104,7 @@ pub struct SetGroup {
 }
 impl SetGroup {
     pub fn delete_group(leader: PlayerId) -> Self {
-        Self {
-            leader,
-            member: vec![],
-        }
+        Self { leader, member: vec![] }
     }
 }
 

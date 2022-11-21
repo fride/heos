@@ -1,13 +1,13 @@
-use std::net::{IpAddr, Ipv4Addr};
 use anyhow::Context;
 use axum::extract::Path;
 use axum::handler::Handler;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{Router, TypedHeader};
+
 use headers::{ContentType, Expires};
+
 use std::time::{Duration, SystemTime};
-use clap::builder::Str;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing::info;
@@ -77,20 +77,18 @@ async fn static_files(Path(filename): Path<String>) -> impl IntoResponse {
                 data.content,
             )
                 .into_response()
-        }
+        },
         None => error::code_404().await.into_response(),
     }
 }
 
 async fn shutdown_signal() {
     let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
+        signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
     };
 
     #[cfg(unix)]
-        let terminate = async {
+    let terminate = async {
         signal::unix::signal(signal::unix::SignalKind::terminate())
             .expect("failed to install signal handler")
             .recv()
@@ -98,7 +96,7 @@ async fn shutdown_signal() {
     };
 
     #[cfg(not(unix))]
-        let terminate = std::future::pending::<()>();
+    let terminate = std::future::pending::<()>();
 
     tokio::select! {
         _ = ctrl_c => {},

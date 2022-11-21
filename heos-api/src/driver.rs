@@ -47,16 +47,8 @@ impl HeosDriver {
         let groups = load_groups(&self.api).await?;
         let music_sources = self.api.get_music_sources().await?;
         {
-            debug!(
-                "Found {} players and {} groups",
-                players.len(),
-                groups.len()
-            );
-            println!(
-                "Found {} players and {} groups",
-                players.len(),
-                groups.len()
-            );
+            debug!("Found {} players and {} groups", players.len(), groups.len());
+            println!("Found {} players and {} groups", players.len(), groups.len());
             let mut state = self.state.lock().unwrap();
             state.players.clear();
             state.groups.clear();
@@ -88,19 +80,11 @@ impl HeosDriver {
         music_sources
     }
 
-    pub async fn get_player_queue(
-        &self,
-        pid: PlayerId,
-        range: Range,
-    ) -> HeosResult<Vec<QueueEntry>> {
+    pub async fn get_player_queue(&self, pid: PlayerId, range: Range) -> HeosResult<Vec<QueueEntry>> {
         self.api.get_queue(pid, range).await
     }
 
-    pub async fn create_group<C: IntoIterator<Item = PlayerId>>(
-        &self,
-        leader: PlayerId,
-        members: C,
-    ) -> HeosResult<()> {
+    pub async fn create_group<C: IntoIterator<Item = PlayerId>>(&self, leader: PlayerId, members: C) -> HeosResult<()> {
         let members: BTreeSet<PlayerId> = members.into_iter().collect();
         // check if we do a valid request first
         // otherwise HEOS will borg!
@@ -140,9 +124,7 @@ impl HeosDriver {
         container_id: &ContainerId,
         range: &Range,
     ) -> HeosResult<BrowseMusicContainerResponse> {
-        self.api
-            .browse_music_containers(sid, container_id, range)
-            .await
+        self.api.browse_music_containers(sid, container_id, range).await
     }
 
     async fn start_event_listener(&self) -> HeosResult<()> {
@@ -168,13 +150,13 @@ impl HeosDriver {
                     let mut state = driver_state.lock().unwrap();
                     state.music_sources = sources.into_iter().map(|s| (s.sid, s)).collect();
                 });
-            }
+            },
             HeosEvent::PlayersChanged => {
                 let _ = load_players(&connection).await.map(|players| {
                     let mut state = driver_state.lock().unwrap();
                     state.players = players.into_iter().map(|s| (s.player_id, s)).collect();
                 });
-            }
+            },
             HeosEvent::GroupChanged => {
                 let _ = load_groups(connection).await.map(|groups| {
                     let mut state = driver_state.lock().unwrap();
@@ -184,33 +166,32 @@ impl HeosDriver {
                     let mut state = driver_state.lock().unwrap();
                     state.players = players.into_iter().map(|p| (p.player_id, p)).collect();
                 });
-            }
+            },
             HeosEvent::PlayerStateChanged { player_id, state } => {
                 let mut driver_state = driver_state.lock().unwrap();
                 if let Some(player) = driver_state.players.get_mut(&player_id) {
                     player.play_state = state
                 }
-            }
+            },
             HeosEvent::PlayerNowPlayingChanged { player_id } => {
-                let _ =
-                    connection
-                        .get_now_playing_media(&player_id)
-                        .await
-                        .map(|now_playing_media| {
-                            let mut state = driver_state.lock().unwrap();
-                            if let Some(player) = state.players.get_mut(&player_id) {
-                                player.now_playing = now_playing_media
-                            }
-                        });
-            }
-            HeosEvent::PlayerNowPlayingProgress { .. } => {}
-            HeosEvent::PlayerPlaybackError { .. } => {}
-            HeosEvent::PlayerVolumeChanged { .. } => {}
-            HeosEvent::PlayerQueueChanged { .. } => {}
-            HeosEvent::PlayerRepeatModeChanged { .. } => {}
-            HeosEvent::PlayerShuffleModeChanged { .. } => {}
-            HeosEvent::GroupVolumeChanged { .. } => {}
-            HeosEvent::UserChanged { .. } => {}
+                let _ = connection
+                    .get_now_playing_media(&player_id)
+                    .await
+                    .map(|now_playing_media| {
+                        let mut state = driver_state.lock().unwrap();
+                        if let Some(player) = state.players.get_mut(&player_id) {
+                            player.now_playing = now_playing_media
+                        }
+                    });
+            },
+            HeosEvent::PlayerNowPlayingProgress { .. } => {},
+            HeosEvent::PlayerPlaybackError { .. } => {},
+            HeosEvent::PlayerVolumeChanged { .. } => {},
+            HeosEvent::PlayerQueueChanged { .. } => {},
+            HeosEvent::PlayerRepeatModeChanged { .. } => {},
+            HeosEvent::PlayerShuffleModeChanged { .. } => {},
+            HeosEvent::GroupVolumeChanged { .. } => {},
+            HeosEvent::UserChanged { .. } => {},
         };
         Ok(())
     }

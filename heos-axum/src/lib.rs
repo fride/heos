@@ -1,4 +1,11 @@
+
+
+
+
 use heos_api::HeosDriver;
+
+
+
 
 // macros need to go to the top!
 #[macro_use]
@@ -18,6 +25,8 @@ pub mod controllers;
 pub mod error;
 pub mod models;
 pub mod views;
+
+pub mod axum_hal;
 #[derive(Clone)]
 pub struct ApiContext {
     pub driver: HeosDriver,

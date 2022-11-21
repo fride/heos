@@ -24,7 +24,7 @@ pub use driver::HeosDriver;
 
 mod discover;
 
-pub async fn find_driver() -> HeosResult<HeosDriver>{
+pub async fn find_driver() -> HeosResult<HeosDriver> {
     let addr = discover::find_heos_devices().await?;
     HeosDriver::new((addr, 1255)).await
 }

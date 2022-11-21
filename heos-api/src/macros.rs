@@ -23,15 +23,13 @@ macro_rules! json_option_parser {
 
             fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
                 match value.payload {
-                    Value::Object(map) if !map.is_empty() => {
-                        (serde_json::from_value(Value::Object(map))
-                            .context(format!(
-                                "Failed to parse {} from command response.",
-                                stringify!($t)
-                            ))
-                            .map(|res| Some(res)))
-                        .map_err(|e| e.into())
-                    }
+                    Value::Object(map) if !map.is_empty() => (serde_json::from_value(Value::Object(map))
+                        .context(format!(
+                            "Failed to parse {} from command response.",
+                            stringify!($t)
+                        ))
+                        .map(|res| Some(res)))
+                    .map_err(|e| e.into()),
                     _ => Ok(None),
                 }
             }
@@ -46,10 +44,7 @@ macro_rules! qs_parser {
 
             fn try_from(value: CommandResponse) -> Result<Self, Self::Error> {
                 qs::from_str(&value.message)
-                    .context(format!(
-                        "Failed to parse CommandResponse for {}.",
-                        stringify!($t)
-                    ))
+                    .context(format!("Failed to parse CommandResponse for {}.", stringify!($t)))
                     .map_err(|e| e.into())
             }
         }

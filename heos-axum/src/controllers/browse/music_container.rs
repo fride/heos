@@ -28,10 +28,7 @@ pub async fn browse_music_container(
     info!("Enter browse_container");
     let range = match (params.start, params.end) {
         (Some(start), Some(end)) => Range { start, end },
-        (Some(start), None) => Range {
-            start,
-            end: start + 10,
-        },
+        (Some(start), None) => Range { start, end: start + 10 },
         (None, Some(end)) => Range { start: 0, end },
         _ => Range::default(),
     };

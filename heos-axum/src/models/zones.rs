@@ -1,9 +1,14 @@
-use std::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::collections::{BTreeMap};
+
 
 use heos_api::types::group::Group;
 use heos_api::types::player::{HeosPlayer, NowPlayingMedia, PlayState};
 use heos_api::types::{AlbumId, Level, MediaId, PlayerId, QueueId, SourceId};
+use rust_hall::HalResource;
 
+#[derive(Serialize, Deserialize)]
 pub struct Zone {
     pub name: String,
     pub id: PlayerId,
@@ -31,15 +36,41 @@ impl Zone {
 }
 
 pub struct Zones(Vec<Zone>);
+
 impl Zones {
+    pub fn new(players: Vec<HeosPlayer>, groups: Vec<Group>) -> Self {
+        (players, groups).into()
+    }
+
     pub fn iter(&self) -> std::slice::Iter<'_, Zone> {
         self.0.iter()
     }
 }
 
-#[derive(Debug, Clone)]
+impl Into<HalResource> for Zones {
+    fn into(self) -> HalResource {
+        let resource = HalResource::with_self("/zones").add_object(json!({
+            "count": self.0.len()
+        }));
+        self.0
+            .into_iter()
+            .fold(resource, |hal, zone| hal.with_embedded("zones", zone))
+    }
+}
+
+impl Into<HalResource> for Zone {
+    fn into(self) -> HalResource {
+        HalResource::with_self(format!("/zones/{}", self.id))
+            .add_link("zone:edit_members", format!("zones/{}edit-members", self.id))
+            .add_object(self)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NowPlaying {
+    #[serde(rename = "nothing")]
     Noting,
+    #[serde(rename = "station")]
     Station {
         song: String,
         album: String,
@@ -51,6 +82,7 @@ pub enum NowPlaying {
         sid: SourceId,
         album_id: AlbumId,
     },
+    #[serde(rename = "song")]
     Song {
         song: String,
         album: String,
@@ -114,14 +146,12 @@ impl From<NowPlayingMedia> for NowPlaying {
         }
     }
 }
+
 impl From<(Vec<HeosPlayer>, Vec<Group>)> for Zones {
     fn from(input: (Vec<HeosPlayer>, Vec<Group>)) -> Self {
         let mut zones = Vec::new();
-        let mut players: BTreeMap<PlayerId, HeosPlayer> = input
-            .0
-            .into_iter()
-            .map(|player| (player.player_id, player))
-            .collect();
+        let mut players: BTreeMap<PlayerId, HeosPlayer> =
+            input.0.into_iter().map(|player| (player.player_id, player)).collect();
         for group in input.1 {
             if let Some(leader) = players.remove(&group.gid) {
                 let mut members: BTreeMap<PlayerId, (String, Level)> = group
@@ -130,26 +160,17 @@ impl From<(Vec<HeosPlayer>, Vec<Group>)> for Zones {
                     .filter_map(|member| players.remove(&member.pid))
                     .map(|player| (player.player_id, (player.name, player.volume)))
                     .collect();
-                let name: Vec<String> =
-                    members
-                        .values()
-                        .fold(vec![leader.name.clone()], |mut acc, player| {
-                            acc.push(player.0.clone());
-                            acc
-                        });
-                members.insert(
-                    leader.player_id,
-                    (leader.name.clone(), leader.volume.clone()),
-                );
+                let name: Vec<String> = members.values().fold(vec![leader.name.clone()], |mut acc, player| {
+                    acc.push(player.0.clone());
+                    acc
+                });
+                members.insert(leader.player_id, (leader.name.clone(), leader.volume.clone()));
                 zones.push(Zone {
                     name: name.join(" + "),
                     id: leader.player_id,
                     volume: group.volume,
                     members,
-                    now_playing: leader
-                        .now_playing
-                        .map(|m| m.into())
-                        .unwrap_or(NowPlaying::Noting),
+                    now_playing: leader.now_playing.map(|m| m.into()).unwrap_or(NowPlaying::Noting),
                     state: leader.play_state,
                 });
             }
@@ -159,10 +180,7 @@ impl From<(Vec<HeosPlayer>, Vec<Group>)> for Zones {
                 name: player.name,
                 id: pid,
                 volume: player.volume,
-                now_playing: player
-                    .now_playing
-                    .map(|m| m.into())
-                    .unwrap_or(NowPlaying::Noting),
+                now_playing: player.now_playing.map(|m| m.into()).unwrap_or(NowPlaying::Noting),
                 members: Default::default(),
                 state: player.play_state,
             })
