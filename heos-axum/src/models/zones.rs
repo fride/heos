@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::{BTreeMap, HashMap};
-use tracing_subscriber::fmt::format;
+use std::collections::{BTreeMap};
+
 
 use heos_api::types::group::Group;
 use heos_api::types::player::{HeosPlayer, NowPlayingMedia, PlayState};
@@ -49,12 +49,12 @@ impl Zones {
 
 impl Into<HalResource> for Zones {
     fn into(self) -> HalResource {
-        let mut resource = HalResource::with_self("/zones").add_object(json!({
+        let resource = HalResource::with_self("/zones").add_object(json!({
             "count": self.0.len()
         }));
         self.0
             .into_iter()
-            .fold(resource, |mut hal, zone| hal.with_embedded("zones", zone))
+            .fold(resource, |hal, zone| hal.with_embedded("zones", zone))
     }
 }
 

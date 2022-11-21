@@ -1,5 +1,5 @@
 use clap::Parser;
-use heos_api::HeosResult;
+
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 #[derive(Parser, Debug)]

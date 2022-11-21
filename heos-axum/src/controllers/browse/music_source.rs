@@ -23,11 +23,11 @@ pub async fn source_details(
 
 pub async fn list_music_sources(
     Extension(driver): Extension<HeosDriver>,
-    Extension(baseUrl): Extension<Arc<BaseUrl>>,
+    Extension(base_url): Extension<Arc<BaseUrl>>,
 ) -> Result<MusicSourcesPages, AppError> {
     let music_sources = driver.music_sources();
     Ok(MusicSourcesPages {
-        base_uri: baseUrl.as_str().to_string(),
+        base_uri: base_url.as_str().to_string(),
         music_sources,
     })
 }

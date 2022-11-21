@@ -6,7 +6,7 @@ use heos_axum::controllers;
 use crate::config::Config;
 use clap::Parser;
 use heos_api::HeosDriver;
-use tokio::signal;
+
 use tracing::info;
 
 #[tokio::main]

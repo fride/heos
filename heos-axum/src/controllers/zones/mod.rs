@@ -1,6 +1,6 @@
 use crate::error::AppError;
 
-use crate::views::pages::page;
+
 use crate::views::zones::edit::EditZoneMembers;
 use crate::views::zones::listing::ZonesPage;
 use anyhow::anyhow;
@@ -8,7 +8,7 @@ use anyhow::Context;
 use axum::extract::Path;
 use axum::response::{IntoResponse, Redirect};
 use axum::routing::{get, post};
-use axum::{Extension, Form, Json, Router, TypedHeader};
+use axum::{Extension, Form, Router};
 
 use heos_api::types::player::HeosPlayer;
 use heos_api::types::PlayerId;
@@ -17,8 +17,8 @@ use heos_api::HeosDriver;
 use crate::axum_hal::HalJson;
 use crate::models::zones::Zones;
 use axum::http::{header, HeaderMap};
-use headers::AcceptRanges;
-use rust_hall::HalResource;
+
+
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;

@@ -1,6 +1,6 @@
 use axum::{
     http::{header, HeaderValue, StatusCode},
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
 };
 use bytes::BufMut;
 use rust_hall::HalResource;

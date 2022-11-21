@@ -41,6 +41,6 @@ mod test {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     pub async fn test_stuff() {
-        let devices = find_heos_devices().await.unwrap();
+        let _devices = find_heos_devices().await.unwrap();
     }
 }

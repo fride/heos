@@ -4,9 +4,9 @@ use axum::handler::Handler;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{Router, TypedHeader};
-use clap::builder::Str;
+
 use headers::{ContentType, Expires};
-use std::net::{IpAddr, Ipv4Addr};
+
 use std::time::{Duration, SystemTime};
 use tokio::signal;
 use tower_http::trace::TraceLayer;
